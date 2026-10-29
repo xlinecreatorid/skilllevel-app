@@ -1,0 +1,254 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 1080" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #f5f0e6; }
+      .box-client { fill: #fbf8f1; stroke: #1f3f66; stroke-width: 2; rx: 6px; }
+      .box-auth { fill: #fbf8f1; stroke: #2f5d3a; stroke-width: 2; rx: 6px; }
+      .box-server { fill: #fbf8f1; stroke: #8a4b1f; stroke-width: 2; rx: 6px; }
+      .box-security { fill: #fbf8f1; stroke: #8c2f2f; stroke-width: 2; rx: 6px; }
+      .box-ai { fill: #fbf8f1; stroke: #1f3f66; stroke-width: 2; rx: 6px; }
+      .box-db { fill: #fbf8f1; stroke: #3b3a36; stroke-width: 2; rx: 6px; }
+      .decision { fill: #ece5d7; stroke: #b9ac93; stroke-width: 2; }
+      
+      .text-title { font-family: 'Palatino', Georgia, serif; font-size: 26px; font-weight: bold; fill: #1b1a17; }
+      .text-subtitle { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; fill: #6b6355; }
+      .text-header { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; fill: #1f3f66; }
+      .text-node { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; font-weight: 600; fill: #1b1a17; text-anchor: middle; }
+      .text-sub { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; fill: #4a463d; text-anchor: middle; }
+      .text-label { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; font-weight: 600; fill: #1f3f66; }
+      
+      .arrow { stroke: #6b6355; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead); }
+      .arrow-accent { stroke: #1f3f66; stroke-width: 2; fill: none; marker-end: url(#arrowhead-accent); }
+      .arrow-warn { stroke: #8a4b1f; stroke-width: 1.5; stroke-dasharray: 4,3; fill: none; marker-end: url(#arrowhead-warn); }
+      .arrow-ok { stroke: #2f5d3a; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead-ok); }
+    </style>
+    
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#6b6355" />
+    </marker>
+    <marker id="arrowhead-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#1f3f66" />
+    </marker>
+    <marker id="arrowhead-warn" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#8a4b1f" />
+    </marker>
+    <marker id="arrowhead-ok" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#2f5d3a" />
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1440" height="1080" class="bg" />
+
+  <!-- Main Title & Subtitle -->
+  <text x="60" y="55" class="text-title">Skilllevel v2.1 — Diagram Pohon Alur Sistem &amp; Logika Keputusan</text>
+  <text x="60" y="80" class="text-subtitle">Arsitektur Produksi: Autentikasi Pengguna, Jalur Navigasi, Gateway AI Terproteksi, E2EE, dan Fallback Multi-Provider</text>
+
+  <!-- ================= LEVEL 1: ENTRY & AUTENTIKASI ================= -->
+  <g transform="translate(60, 110)">
+    <rect width="1320" height="130" fill="#fbf8f1" stroke="#d9cfbb" rx="8" />
+    <text x="20" y="28" class="text-header">1. Titik Masuk Pengguna &amp; Logika Autentikasi</text>
+
+    <!-- Node Pengguna Baru -->
+    <rect x="30" y="45" width="180" height="65" class="box-client" />
+    <text x="120" y="72" class="text-node">Kunjungan Pengguna</text>
+    <text x="120" y="90" class="text-sub">Peramban Web / Desktop</text>
+
+    <!-- Decision Auth -->
+    <polygon points="320,45 420,77 320,110 220,77" class="decision" />
+    <text x="320" y="74" class="text-node">Tipe Akses?</text>
+    <text x="320" y="88" class="text-sub">Pilihan Status</text>
+
+    <!-- Jalur Tamu -->
+    <rect x="470" y="45" width="220" height="65" class="box-client" />
+    <text x="580" y="70" class="text-node">Tamu (Guest Mode)</text>
+    <text x="580" y="88" class="text-sub">Data Lokal Terenkripsi (AES-GCM)</text>
+
+    <!-- Jalur Google OAuth -->
+    <rect x="730" y="45" width="250" height="65" class="box-auth" />
+    <text x="855" y="70" class="text-node">Masuk Akun Google</text>
+    <text x="855" y="88" class="text-sub">OAuth 2.0 via Supabase Auth</text>
+
+    <!-- Jalur Admin SSO -->
+    <rect x="1020" y="45" width="260" height="65" class="box-auth" />
+    <text x="1150" y="70" class="text-node">SSO Khusus Admin</text>
+    <text x="1150" y="88" class="text-sub">Enterprise SAML / OIDC Domain Kampus</text>
+
+    <!-- Lines Level 1 -->
+    <line x1="210" y1="77" x2="220" y2="77" class="arrow" />
+    <line x1="420" y1="77" x2="470" y2="77" class="arrow" />
+    <path d="M 370 61 Q 500 20 730 65" class="arrow" />
+    <path d="M 370 95 Q 650 140 1020 85" class="arrow" />
+  </g>
+
+  <!-- ================= LEVEL 2: NAVIGASI & DISPATCHER VIEW ================= -->
+  <g transform="translate(60, 260)">
+    <rect width="1320" height="140" fill="#fbf8f1" stroke="#d9cfbb" rx="8" />
+    <text x="20" y="28" class="text-header">2. Navigasi Aplikasi &amp; Pilihan Tampilan Utama</text>
+
+    <!-- Dashboard -->
+    <rect x="30" y="45" width="195" height="75" class="box-client" />
+    <text x="127" y="74" class="text-node">Dashboard</text>
+    <text x="127" y="92" class="text-sub">Statistik, Level XP &amp; Jalur</text>
+
+    <!-- Modul -->
+    <rect x="250" y="45" width="195" height="75" class="box-client" />
+    <text x="347" y="74" class="text-node">Daftar Modul</text>
+    <text x="347" y="92" class="text-sub">9 Modul Bawaan + Kustom</text>
+
+    <!-- Kuis -->
+    <rect x="470" y="45" width="195" height="75" class="box-client" />
+    <text x="567" y="74" class="text-node">Sesi Kuis</text>
+    <text x="567" y="92" class="text-sub">Bank Soal &amp; Evaluasi Skor</text>
+
+    <!-- Tutor AI -->
+    <rect x="690" y="45" width="195" height="75" class="box-ai" />
+    <text x="787" y="74" class="text-node">Tutor AI Terfokus</text>
+    <text x="787" y="92" class="text-sub">Konteks Modul &amp; Obrolan</text>
+
+    <!-- Unggah -->
+    <rect x="910" y="45" width="185" height="75" class="box-client" />
+    <text x="1002" y="74" class="text-node">Unggah Dokumen</text>
+    <text x="1002" y="92" class="text-sub">Ekstraksi PDF / Dokumen</text>
+
+    <!-- Progres -->
+    <rect x="1120" y="45" width="170" height="75" class="box-client" />
+    <text x="1205" y="74" class="text-node">Rekap Progres</text>
+    <text x="1205" y="92" class="text-sub">Pencapaian XP &amp; Kuis</text>
+  </g>
+
+  <!-- ================= LEVEL 3: GATEWAY & KONTROL KEAMANAN AI ================= -->
+  <g transform="translate(60, 420)">
+    <rect width="1320" height="230" fill="#fbf8f1" stroke="#d9cfbb" rx="8" />
+    <text x="20" y="28" class="text-header">3. Pipeline Gateway AI &amp; Lapisan Keamanan Server</text>
+
+    <!-- Input Pengguna / Prompt -->
+    <rect x="30" y="55" width="180" height="70" class="box-client" />
+    <text x="120" y="85" class="text-node">Permintaan AI Klien</text>
+    <text x="120" y="103" class="text-sub">Tutor / Pembuat Modul</text>
+
+    <!-- Rate Limiter -->
+    <rect x="240" y="55" width="160" height="70" class="box-security" />
+    <text x="320" y="85" class="text-node">Rate Limiter</text>
+    <text x="320" y="103" class="text-sub">40 Permintaan / Menit</text>
+
+    <!-- Prompt Injection Inspector -->
+    <rect x="430" y="55" width="190" height="70" class="box-security" />
+    <text x="525" y="83" class="text-node">LeakGuard Inspector</text>
+    <text x="525" y="101" class="text-sub">Blokir Prompt Injection</text>
+
+    <!-- Decision Safe? -->
+    <polygon points="710,55 780,90 710,125 640,90" class="decision" />
+    <text x="710" y="87" class="text-node">Aman?</text>
+    <text x="710" y="101" class="text-sub">Cek Pola</text>
+
+    <!-- Blokir / Tolak -->
+    <rect x="625" y="150" width="170" height="55" class="box-security" />
+    <text x="710" y="175" class="text-node">Tolak Permintaan</text>
+    <text x="710" y="192" class="text-sub">Kirim Pesan Ramah (HTTP 400)</text>
+
+    <!-- SSRF & Endpoint Validator -->
+    <rect x="830" y="55" width="190" height="70" class="box-security" />
+    <text x="925" y="83" class="text-node">Validasi Endpoint</text>
+    <text x="925" y="101" class="text-sub">Tolak Host Privat / SSRF</text>
+
+    <!-- Router Provider -->
+    <rect x="1060" y="55" width="230" height="70" class="box-server" />
+    <text x="1175" y="83" class="text-node">Router Protokol Provider</text>
+    <text x="1175" y="101" class="text-sub">OpenAI / Anthropic / Gemini</text>
+
+    <!-- Lines Level 3 -->
+    <line x1="210" y1="90" x2="240" y2="90" class="arrow" />
+    <line x1="400" y1="90" x2="430" y2="90" class="arrow" />
+    <line x1="620" y1="90" x2="640" y2="90" class="arrow" />
+    <line x1="710" y1="125" x2="710" y2="150" class="arrow-warn" />
+    <text x="720" y="142" class="text-label" fill="#8c2f2f">Tidak</text>
+    <line x1="780" y1="90" x2="830" y2="90" class="arrow-ok" />
+    <text x="795" y="80" class="text-label" fill="#2f5d3a">Ya</text>
+    <line x1="1020" y1="90" x2="1060" y2="90" class="arrow-accent" />
+  </g>
+
+  <!-- ================= LEVEL 4: UPSTREAM PROVIDER & FALLBACK ================= -->
+  <g transform="translate(60, 670)">
+    <rect width="1320" height="230" fill="#fbf8f1" stroke="#d9cfbb" rx="8" />
+    <text x="20" y="28" class="text-header">4. Eksekusi Model AI, Fallback Kunci Cadangan &amp; Penanganan Jaringan</text>
+
+    <!-- Model Gratis Baru: Mercury-3 -->
+    <rect x="30" y="55" width="220" height="65" class="box-ai" />
+    <text x="140" y="83" class="text-node">Mercury-3 (Inception Labs)</text>
+    <text x="140" y="101" class="text-sub">https://api.inceptionlabs.ai/v1</text>
+
+    <!-- Model Bawaan / OpenAI -->
+    <rect x="270" y="55" width="200" height="65" class="box-ai" />
+    <text x="370" y="83" class="text-node">Agnes 2.5 Flash</text>
+    <text x="370" y="101" class="text-sub">OpenAI Format Bawaan</text>
+
+    <!-- Model Anthropic & Gemini -->
+    <rect x="490" y="55" width="220" height="65" class="box-ai" />
+    <text x="600" y="83" class="text-node">Anthropic / Gemini</text>
+    <text x="600" y="101" class="text-sub">Claude 3.5 / Gemini 2.0</text>
+
+    <!-- Kunci Utama & Fallback Keys Loop -->
+    <rect x="740" y="55" width="260" height="65" class="box-server" />
+    <text x="870" y="83" class="text-node">Rotasi Kunci Cadangan</text>
+    <text x="870" y="101" class="text-sub">Kunci Utama -&gt; Fallback 1 -&gt; 2</text>
+
+    <!-- Exponential Backoff Retry -->
+    <rect x="1030" y="55" width="260" height="65" class="box-security" />
+    <text x="1160" y="83" class="text-node">Exponential Backoff Retry</text>
+    <text x="1160" y="101" class="text-sub">Maks 3x Upaya pada 429 / 5xx</text>
+
+    <!-- Loop Detector -->
+    <rect x="380" y="145" width="250" height="60" class="box-security" />
+    <text x="505" y="172" class="text-node">Detektor Repetisi (Loop Breaker)</text>
+    <text x="505" y="190" class="text-sub">Potong Jika Terulang &gt;= 3x</text>
+
+    <!-- Secret Redactor -->
+    <rect x="670" y="145" width="260" height="60" class="box-security" />
+    <text x="800" y="172" class="text-node">Sanitasi Rahasia &amp; Sistem</text>
+    <text x="800" y="190" class="text-sub">Hapus sk-*, AIza*, Prompt Internal</text>
+
+    <!-- Aliran SSE ke Klien -->
+    <rect x="970" y="145" width="320" height="60" class="box-client" />
+    <text x="1130" y="172" class="text-node">Aliran SSE &amp; Render Markdown Aman</text>
+    <text x="1130" y="190" class="text-sub">Pemulihan Token, Tanpa Kebocoran</text>
+
+    <!-- Lines Level 4 -->
+    <line x1="710" y1="87" x2="740" y2="87" class="arrow" />
+    <line x1="1000" y1="87" x2="1030" y2="87" class="arrow" />
+    <path d="M 1160 120 L 1160 145" class="arrow" />
+    <line x1="970" y1="175" x2="930" y2="175" class="arrow" />
+    <line x1="670" y1="175" x2="630" y2="175" class="arrow" />
+  </g>
+
+  <!-- ================= LEVEL 5: PERSISTENSI & E2EE STORAGE ================= -->
+  <g transform="translate(60, 920)">
+    <rect width="1320" height="130" fill="#fbf8f1" stroke="#d9cfbb" rx="8" />
+    <text x="20" y="28" class="text-header">5. Penyimpanan Data Terenkripsi End-to-End (E2EE) &amp; Sinkronisasi Supabase</text>
+
+    <!-- Kunci PBKDF2 Perangkat -->
+    <rect x="30" y="45" width="260" height="65" class="box-client" />
+    <text x="160" y="72" class="text-node">Web Crypto API (SubtleCrypto)</text>
+    <text x="160" y="90" class="text-sub">PBKDF2 SHA-256 (100.000 iterasi)</text>
+
+    <!-- Enkripsi AES-GCM -->
+    <rect x="330" y="45" width="280" height="65" class="box-security" />
+    <text x="470" y="72" class="text-node">Enkripsi AES-GCM 256-bit</text>
+    <text x="470" y="90" class="text-sub">IV Unik 12-byte per Data</text>
+
+    <!-- Storage Lokal -->
+    <rect x="650" y="45" width="280" height="65" class="box-client" />
+    <text x="790" y="72" class="text-node">Penyimpanan Lokal Browser</text>
+    <text x="790" y="90" class="text-sub">Ciphertext Aman (Mode Tamu)</text>
+
+    <!-- Supabase Database Table -->
+    <rect x="970" y="45" width="320" height="65" class="box-db" />
+    <text x="1130" y="72" class="text-node">Supabase Cloud Database</text>
+    <text x="1130" y="90" class="text-sub">Tabel `user_progress` + Row Level Security</text>
+
+    <!-- Lines Level 5 -->
+    <line x1="290" y1="77" x2="330" y2="77" class="arrow" />
+    <line x1="610" y1="77" x2="650" y2="77" class="arrow" />
+    <line x1="930" y1="77" x2="970" y2="77" class="arrow-ok" />
+  </g>
+</svg>
