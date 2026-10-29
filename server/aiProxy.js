@@ -39,49 +39,101 @@ function normalizeMessages(messages) {
   });
 }
 
-export function resolveTarget(config, body = {}) {
+export function resolveTargets(config, body = {}) {
   const customEndpoint = typeof body.endpoint === 'string' ? body.endpoint.trim() : '';
   const customModel = typeof body.model === 'string' ? body.model.trim() : '';
   const customKey = typeof body.apiKey === 'string' ? body.apiKey.trim() : '';
-  const provider = (typeof body.provider === 'string' && body.provider ? body.provider : config.provider || 'openai').toLowerCase();
+  const provider = (typeof body.provider === 'string' && body.provider ? body.provider : 'openai').toLowerCase();
 
-  const endpointRaw = customEndpoint || config.baseUrl;
-  const model = customModel || config.model;
-  const primaryKey = customKey || config.apiKey;
+  const isSelfProvider = Boolean(
+    customEndpoint ||
+    customKey ||
+    (customModel && customModel !== 'agnes-2.5-flash' && customModel !== 'mercury-3')
+  );
 
-  if (!model) throw new AiError('Nama model belum diisi.', { status: 400, kind: 'config' });
-  if (model.length > 120 || !/^[A-Za-z0-9._:/@+-]+$/.test(model)) {
-    throw new AiError('Nama model memuat karakter yang tidak diizinkan.', { status: 400, kind: 'config' });
+  // Jika pengguna mengonfigurasi provider / endpoint mandiri
+  if (isSelfProvider) {
+    const endpointRaw = customEndpoint || config.baseUrl;
+    const model = customModel || config.model;
+    const primaryKey = customKey || config.apiKey;
+
+    if (!model) throw new AiError('Nama model mandiri belum diisi.', { status: 400, kind: 'config' });
+    if (model.length > 120 || !/^[A-Za-z0-9._:/@+-]+$/.test(model)) {
+      throw new AiError('Nama model memuat karakter yang tidak diizinkan.', { status: 400, kind: 'config' });
+    }
+
+    const check = validateEndpoint(endpointRaw, { allowPrivate: config.allowPrivateEndpoints });
+    if (!check.ok) throw new AiError(check.reason, { status: 400, kind: 'config' });
+
+    const base = check.url.toString().replace(/\/+$/, '');
+    let fullUrl = `${base}/chat/completions`;
+    if (provider === 'anthropic') {
+      fullUrl = base.endsWith('/v1') ? `${base}/messages` : `${base}/v1/messages`;
+    }
+
+    return [
+      {
+        name: `Self Provider (${model})`,
+        url: fullUrl,
+        baseUrl: base,
+        model,
+        apiKey: primaryKey || '',
+        keyPool: primaryKey ? [primaryKey] : [],
+        provider,
+        usingServerKey: false,
+        usingCustomEndpoint: true,
+        isBuiltin: false,
+      },
+    ];
   }
-  if (!primaryKey) {
-    throw new AiError(
-      'Kredensial model belum tersedia. Isi AI_API_KEY di berkas .env server atau pilih model gratis di Pengaturan AI.',
-      { status: 503, kind: 'nokey' }
-    );
-  }
 
-  const check = validateEndpoint(endpointRaw, { allowPrivate: config.allowPrivateEndpoints });
-  if (!check.ok) throw new AiError(check.reason, { status: 400, kind: 'config' });
+  // Jika tidak ada konfigurasi kustom, otomatis pakai model bawaan (Agnes & Mercury)
+  const builtinList =
+    config.builtinModels && config.builtinModels.length > 0
+      ? config.builtinModels
+      : [
+          {
+            id: 'agnes-2.5-flash',
+            name: 'Agnes 2.5 Flash',
+            endpoint: 'https://apihub.agnes-ai.com/v1',
+            apiKey: 'sk-Fq20kIW1ReDlBMxEX6FFZQAkBgs8dZSH4P0yKP6o2Nr4MoOe',
+            provider: 'openai',
+          },
+          {
+            id: 'mercury-3',
+            name: 'Mercury-3 (Inception Labs)',
+            endpoint: 'https://api.inceptionlabs.ai/v1',
+            apiKey: '',
+            provider: 'openai',
+          },
+        ];
 
-  const base = check.url.toString().replace(/\/+$/, '');
-  let fullUrl = `${base}/chat/completions`;
-  if (provider === 'anthropic') {
-    fullUrl = base.endsWith('/v1') ? `${base}/messages` : `${base}/v1/messages`;
-  }
+  return builtinList.map((m) => {
+    const base = m.endpoint.replace(/\/+$/, '');
+    const key =
+      m.apiKey ||
+      config.apiKey ||
+      (m.id.includes('agnes') ? 'sk-Fq20kIW1ReDlBMxEX6FFZQAkBgs8dZSH4P0yKP6o2Nr4MoOe' : '');
+    const pool = [key, ...(config.fallbackKeys || [])].filter(Boolean);
 
-  const fallbackKeys = customKey ? [] : (config.fallbackKeys || []);
-  const keyPool = [primaryKey, ...fallbackKeys];
+    return {
+      name: m.name,
+      url: `${base}/chat/completions`,
+      baseUrl: base,
+      model: m.id,
+      apiKey: key,
+      keyPool: pool,
+      provider: m.provider || 'openai',
+      usingServerKey: true,
+      usingCustomEndpoint: false,
+      isBuiltin: true,
+    };
+  });
+}
 
-  return {
-    url: fullUrl,
-    baseUrl: base,
-    model,
-    apiKey: primaryKey,
-    keyPool,
-    provider,
-    usingServerKey: !customKey,
-    usingCustomEndpoint: Boolean(customEndpoint),
-  };
+export function resolveTarget(config, body = {}) {
+  const targets = resolveTargets(config, body);
+  return targets[0];
 }
 
 function buildOpenAiPayload({ model, messages, system, temperature, json, maxTokens, stream, thinking }) {
@@ -149,7 +201,9 @@ async function fetchWithRetry(target, payload, { signal, secrets }, key) {
         headers['anthropic-version'] = '2023-06-01';
         headers['Accept'] = payload.stream ? 'text/event-stream' : 'application/json';
       } else {
-        headers['Authorization'] = `Bearer ${key}`;
+        if (key) {
+          headers['Authorization'] = `Bearer ${key}`;
+        }
         headers['Accept'] = payload.stream ? 'text/event-stream' : 'application/json';
       }
 
@@ -202,8 +256,10 @@ async function requestWithFallbackKeys(target, payloadBuilder, ctx) {
   let lastResponse = null;
   let lastBody = '';
 
-  for (let i = 0; i < target.keyPool.length; i++) {
-    const currentKey = target.keyPool[i];
+  const pool = target.keyPool && target.keyPool.length > 0 ? target.keyPool : [target.apiKey || ''];
+
+  for (let i = 0; i < pool.length; i++) {
+    const currentKey = pool[i];
     const payload = payloadBuilder(target);
 
     try {
@@ -213,7 +269,7 @@ async function requestWithFallbackKeys(target, payloadBuilder, ctx) {
       lastResponse = response;
       lastBody = await response.text();
 
-      // Jika thinking parameter ditolak, coba ulangi tanpa thinking
+      // Jika thinking parameter ditolak, ulangi tanpa thinking
       if (response.status === 400 && payload.thinking && /thinking|reasoning/i.test(lastBody)) {
         const retryPayload = { ...payload };
         delete retryPayload.thinking;
@@ -221,14 +277,14 @@ async function requestWithFallbackKeys(target, payloadBuilder, ctx) {
         if (fallbackResp.ok) return fallbackResp;
       }
 
-      // Jika error 401, 403, atau 429 dan ada kunci cadangan, rotasi ke kunci berikutnya
-      if ([401, 403, 429].includes(response.status) && i < target.keyPool.length - 1) {
+      // Jika error kredensial atau batas kuota dan ada kunci cadangan, rotasi
+      if ([401, 403, 429].includes(response.status) && i < pool.length - 1) {
         continue;
       }
 
       break;
     } catch (err) {
-      if (i < target.keyPool.length - 1) continue;
+      if (i < pool.length - 1) continue;
       throw err;
     }
   }
@@ -258,144 +314,171 @@ function extractAnthropicText(data) {
 
 export async function completeChat(config, body, { signal } = {}) {
   const messages = normalizeMessages(body.messages);
-  const target = resolveTarget(config, body);
-  const secrets = [...target.keyPool, config.apiKey];
+  const targets = resolveTargets(config, body);
 
   const totalChars = messages.reduce((sum, m) => sum + m.content.length, 0) + String(body.system || '').length;
   if (totalChars > config.maxInputChars) {
     throw new AiError('Konteks terlalu panjang untuk satu permintaan.', { status: 413, kind: 'input' });
   }
 
-  const payloadBuilder = (t) => {
-    if (t.provider === 'anthropic') {
-      return buildAnthropicPayload({
+  let lastError = null;
+
+  for (let tIdx = 0; tIdx < targets.length; tIdx++) {
+    const target = targets[tIdx];
+    const secrets = [...target.keyPool, config.apiKey].filter(Boolean);
+
+    const payloadBuilder = (t) => {
+      if (t.provider === 'anthropic') {
+        return buildAnthropicPayload({
+          model: t.model,
+          messages,
+          system: typeof body.system === 'string' ? body.system : '',
+          maxTokens: body.maxTokens,
+          stream: false,
+        });
+      }
+      return buildOpenAiPayload({
         model: t.model,
         messages,
         system: typeof body.system === 'string' ? body.system : '',
+        temperature: body.temperature,
+        json: Boolean(body.json),
         maxTokens: body.maxTokens,
         stream: false,
+        thinking: config.thinking,
       });
-    }
-    return buildOpenAiPayload({
-      model: t.model,
-      messages,
-      system: typeof body.system === 'string' ? body.system : '',
-      temperature: body.temperature,
-      json: Boolean(body.json),
-      maxTokens: body.maxTokens,
-      stream: false,
-      thinking: config.thinking,
-    });
-  };
+    };
 
-  const response = await requestWithFallbackKeys(target, payloadBuilder, { signal, secrets });
-  const raw = await response.text();
-  let data;
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    throw new AiError('Penyedia model mengembalikan respons yang tidak dapat dibaca.', { status: 502 });
+    try {
+      const response = await requestWithFallbackKeys(target, payloadBuilder, { signal, secrets });
+      const raw = await response.text();
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new AiError('Penyedia model mengembalikan respons yang tidak dapat dibaca.', { status: 502 });
+      }
+
+      let text = target.provider === 'anthropic' ? extractAnthropicText(data) : extractOpenAiText(data);
+      text = text.trim();
+      if (!text) throw new AiError('Model tidak mengembalikan teks jawaban.', { status: 502, kind: 'empty' });
+
+      // Proteksi pengulangan teks (looping)
+      const loopDetector = createLoopDetector({ maxRepetitions: 3 });
+      text = loopDetector.filterFullText(text);
+
+      // Sanitasi kebocoran
+      text = sanitizeAiOutput(text, secrets, body.system);
+
+      return { text, model: target.model, usage: data?.usage || null };
+    } catch (err) {
+      lastError = err;
+      // Jika model bawaan gagal, lanjutkan otomatis ke model bawaan berikutnya (Agnes <-> Mercury)
+      if (target.isBuiltin && tIdx < targets.length - 1) {
+        console.warn(`[ai] Model bawaan ${target.name} gagal (${err.message}). Beralih otomatis ke ${targets[tIdx + 1].name}...`);
+        continue;
+      }
+      throw err;
+    }
   }
 
-  let text = target.provider === 'anthropic' ? extractAnthropicText(data) : extractOpenAiText(data);
-  text = text.trim();
-  if (!text) throw new AiError('Model tidak mengembalikan teks jawaban.', { status: 502, kind: 'empty' });
-
-  // Proteksi pengulangan teks (looping)
-  const loopDetector = createLoopDetector({ maxRepetitions: 3 });
-  text = loopDetector.filterFullText(text);
-
-  // Sanitasi kebocoran
-  text = sanitizeAiOutput(text, secrets, body.system);
-
-  return { text, model: target.model, usage: data?.usage || null };
+  throw lastError || new AiError('Layanan AI tidak dapat dihubungi.', { status: 502 });
 }
 
 export async function streamChat(config, body, { signal, onDelta, onDone }) {
   const messages = normalizeMessages(body.messages);
-  const target = resolveTarget(config, body);
-  const secrets = [...target.keyPool, config.apiKey];
+  const targets = resolveTargets(config, body);
 
-  const payloadBuilder = (t) => {
-    if (t.provider === 'anthropic') {
-      return buildAnthropicPayload({
+  let lastError = null;
+
+  for (let tIdx = 0; tIdx < targets.length; tIdx++) {
+    const target = targets[tIdx];
+    const secrets = [...target.keyPool, config.apiKey].filter(Boolean);
+
+    const payloadBuilder = (t) => {
+      if (t.provider === 'anthropic') {
+        return buildAnthropicPayload({
+          model: t.model,
+          messages,
+          system: typeof body.system === 'string' ? body.system : '',
+          maxTokens: body.maxTokens,
+          stream: true,
+        });
+      }
+      return buildOpenAiPayload({
         model: t.model,
         messages,
         system: typeof body.system === 'string' ? body.system : '',
+        temperature: body.temperature,
+        json: Boolean(body.json),
         maxTokens: body.maxTokens,
         stream: true,
+        thinking: config.thinking,
       });
-    }
-    return buildOpenAiPayload({
-      model: t.model,
-      messages,
-      system: typeof body.system === 'string' ? body.system : '',
-      temperature: body.temperature,
-      json: Boolean(body.json),
-      maxTokens: body.maxTokens,
-      stream: true,
-      thinking: config.thinking,
-    });
-  };
+    };
 
-  const response = await requestWithFallbackKeys(target, payloadBuilder, { signal, secrets });
-  if (!response.body) throw new AiError('Penyedia model tidak mengirim aliran data.', { status: 502 });
+    try {
+      const response = await requestWithFallbackKeys(target, payloadBuilder, { signal, secrets });
+      if (!response.body) throw new AiError('Penyedia model tidak mengirim aliran data.', { status: 502 });
 
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  let full = '';
-  const loopDetector = createLoopDetector({ maxRepetitions: 3 });
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let full = '';
+      const loopDetector = createLoopDetector({ maxRepetitions: 3 });
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
 
-    let newline;
-    while ((newline = buffer.indexOf('\n')) !== -1) {
-      const line = buffer.slice(0, newline).trim();
-      buffer = buffer.slice(newline + 1);
-      if (!line.startsWith('data:')) continue;
-      const chunk = line.slice(5).trim();
-      if (!chunk || chunk === '[DONE]') continue;
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith('data:')) continue;
+          const dataStr = trimmed.slice(5).trim();
+          if (!dataStr || dataStr === '[DONE]') continue;
 
-      let parsed;
-      try {
-        parsed = JSON.parse(chunk);
-      } catch {
+          let parsed;
+          try {
+            parsed = JSON.parse(dataStr);
+          } catch {
+            continue;
+          }
+
+          const delta = target.provider === 'anthropic' ? extractAnthropicText(parsed) : extractOpenAiText(parsed);
+          if (!delta) continue;
+
+          const loopCheck = loopDetector.push(delta);
+          if (loopCheck.stopped) {
+            onDelta(loopCheck.text);
+            full += loopCheck.text;
+            break;
+          }
+          if (loopCheck.accept) {
+            const sanitizedChunk = sanitizeAiOutput(delta, secrets, body.system);
+            full += sanitizedChunk;
+            onDelta(sanitizedChunk);
+          }
+        }
+        if (loopDetector.isStopped()) break;
+      }
+
+      if (!full.trim()) throw new AiError('Model tidak mengembalikan teks jawaban.', { status: 502, kind: 'empty' });
+      onDone(full);
+      return { text: full, model: target.model };
+    } catch (err) {
+      lastError = err;
+      if (target.isBuiltin && tIdx < targets.length - 1) {
+        console.warn(`[ai] Model bawaan ${target.name} gagal (${err.message}). Beralih otomatis ke ${targets[tIdx + 1].name}...`);
         continue;
       }
-
-      let delta = '';
-      if (target.provider === 'anthropic') {
-        if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-          delta = parsed.delta.text;
-        }
-      } else {
-        delta = extractOpenAiText(parsed);
-      }
-
-      if (delta) {
-        const loopCheck = loopDetector.push(delta);
-        if (loopCheck.stopped) {
-          onDelta(loopCheck.text);
-          full += loopCheck.text;
-          break;
-        }
-        if (loopCheck.accept) {
-          const sanitizedChunk = sanitizeAiOutput(delta, secrets, body.system);
-          full += sanitizedChunk;
-          onDelta(sanitizedChunk);
-        }
-      }
+      throw err;
     }
-    if (loopDetector.isStopped()) break;
   }
 
-  if (!full.trim()) throw new AiError('Model tidak mengembalikan teks jawaban.', { status: 502, kind: 'empty' });
-  onDone(full);
-  return { text: full, model: target.model };
+  throw lastError || new AiError('Layanan AI tidak dapat dihubungi.', { status: 502 });
 }
 
 export function publicConfig(config) {
@@ -403,10 +486,10 @@ export function publicConfig(config) {
     defaultModel: config.model,
     defaultEndpoint: config.baseUrl,
     provider: config.provider || 'openai',
-    hasServerKey: Boolean(config.apiKey),
+    hasServerKey: true,
     fallbackKeysCount: config.fallbackKeys?.length || 0,
     streaming: config.streaming,
     thinking: config.thinking,
-    freeModels: config.freeModels || [],
+    builtinModels: (config.builtinModels || []).map((m) => ({ id: m.id, name: m.name })),
   };
 }

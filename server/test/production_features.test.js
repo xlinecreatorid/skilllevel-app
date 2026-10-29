@@ -42,14 +42,48 @@ test('encryptServer dan decryptServer bekerja secara bolak-balik (round-trip)', 
   assert.equal(decrypted, original);
 });
 
-test('readAiEnv memuat daftar model gratis termasuk mercury-3 dan membaca kunci fallback', () => {
+test('readAiEnv memuat konfigurasi model bawaan termasuk agnes dan mercury-3 serta membaca kunci fallback', () => {
   const config = readAiEnv({
     AI_API_KEY_FALLBACKS: 'key_cadangan_1, key_cadangan_2',
     AI_PROVIDER: 'anthropic',
   });
   assert.deepEqual(config.fallbackKeys, ['key_cadangan_1', 'key_cadangan_2']);
   assert.equal(config.provider, 'anthropic');
-  const mercury = config.freeModels.find((m) => m.id === 'mercury-3');
-  assert.ok(mercury, 'mercury-3 harus tersedia di daftar model gratis');
+  const mercury = config.builtinModels.find((m) => m.id === 'mercury-3');
+  assert.ok(mercury, 'mercury-3 harus tersedia di daftar model bawaan');
   assert.equal(mercury.endpoint, 'https://api.inceptionlabs.ai/v1');
+  const agnes = config.builtinModels.find((m) => m.id === 'agnes-2.5-flash');
+  assert.ok(agnes, 'agnes-2.5-flash harus tersedia di daftar model bawaan');
+  assert.equal(agnes.endpoint, 'https://apihub.agnes-ai.com/v1');
+});
+
+test('resolveTargets otomatis menggunakan model bawaan agnes dan mercury saat konfigurasi kustom kosong', async () => {
+  const { resolveTargets } = await import('../aiProxy.js');
+  const config = readAiEnv({});
+  const targets = resolveTargets(config, {});
+
+  assert.equal(targets.length, 2);
+  assert.equal(targets[0].model, 'agnes-2.5-flash');
+  assert.equal(targets[0].baseUrl, 'https://apihub.agnes-ai.com/v1');
+  assert.ok(targets[0].apiKey.length > 0, 'agnes harus memiliki kredensial bawaan');
+
+  assert.equal(targets[1].model, 'mercury-3');
+  assert.equal(targets[1].baseUrl, 'https://api.inceptionlabs.ai/v1');
+});
+
+test('resolveTargets menggunakan self provider ketika pengguna mengisi endpoint atau kunci kustom', async () => {
+  const { resolveTargets } = await import('../aiProxy.js');
+  const config = readAiEnv({});
+  const targets = resolveTargets(config, {
+    endpoint: 'https://api.openai.com/v1',
+    model: 'gpt-4o-mini',
+    apiKey: 'sk-custom-user-key',
+    provider: 'openai',
+  });
+
+  assert.equal(targets.length, 1);
+  assert.equal(targets[0].isBuiltin, false);
+  assert.equal(targets[0].baseUrl, 'https://api.openai.com/v1');
+  assert.equal(targets[0].model, 'gpt-4o-mini');
+  assert.equal(targets[0].apiKey, 'sk-custom-user-key');
 });

@@ -3,30 +3,6 @@ import { join } from 'node:path';
 
 const KEY_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
-export const FREE_MODELS = [
-  {
-    id: 'mercury-3',
-    name: 'Mercury-3 (Inception Labs)',
-    endpoint: 'https://api.inceptionlabs.ai/v1',
-    provider: 'openai',
-    description: 'Model penalaran cepat gratis dari Inception Labs.',
-  },
-  {
-    id: 'agnes-2.5-flash',
-    name: 'Agnes 2.5 Flash',
-    endpoint: 'https://apihub.agnes-ai.com/v1',
-    provider: 'openai',
-    description: 'Model bawaan responsif untuk kurikulum web fullstack.',
-  },
-  {
-    id: 'gemini-2.0-flash',
-    name: 'Google Gemini 2.0 Flash',
-    endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai/v1',
-    provider: 'gemini',
-    description: 'Model multimodal generasi terbaru dari Google.',
-  },
-];
-
 export function parseEnv(text) {
   const out = {};
   for (const rawLine of String(text ?? '').split(/\r?\n/)) {
@@ -74,16 +50,46 @@ export function readAiEnv(env = process.env) {
     .map((k) => k.trim())
     .filter(Boolean);
 
+  // Model bawaan otomatis: Agnes 2.5 Flash dan Mercury-3 dengan endpoint & kunci terpisah
+  const agnesBaseUrl = (env.AGNES_BASE_URL || 'https://apihub.agnes-ai.com/v1').trim();
+  const agnesModel = (env.AGNES_MODEL || 'agnes-2.5-flash').trim();
+  const agnesApiKey = (
+    env.AGNES_API_KEY ||
+    env.AI_API_KEY ||
+    'sk-Fq20kIW1ReDlBMxEX6FFZQAkBgs8dZSH4P0yKP6o2Nr4MoOe'
+  ).trim();
+
+  const mercuryBaseUrl = (env.MERCURY_BASE_URL || 'https://api.inceptionlabs.ai/v1').trim();
+  const mercuryModel = (env.MERCURY_MODEL || 'mercury-3').trim();
+  const mercuryApiKey = (env.MERCURY_API_KEY || '').trim();
+
+  const builtinModels = [
+    {
+      id: agnesModel,
+      name: 'Agnes 2.5 Flash',
+      endpoint: agnesBaseUrl,
+      apiKey: agnesApiKey,
+      provider: 'openai',
+    },
+    {
+      id: mercuryModel,
+      name: 'Mercury-3 (Inception Labs)',
+      endpoint: mercuryBaseUrl,
+      apiKey: mercuryApiKey,
+      provider: 'openai',
+    },
+  ];
+
   return {
-    baseUrl: (env.AI_BASE_URL || 'https://apihub.agnes-ai.com/v1').trim(),
-    model: (env.AI_MODEL || 'agnes-2.5-flash').trim(),
+    baseUrl: (env.AI_BASE_URL || agnesBaseUrl).trim(),
+    model: (env.AI_MODEL || agnesModel).trim(),
     apiKey: (env.AI_API_KEY || '').trim(),
     fallbackKeys,
+    builtinModels,
     provider: (env.AI_PROVIDER || 'openai').trim().toLowerCase(),
     streaming: env.AI_STREAMING !== '0',
     thinking: env.AI_THINKING === 'off' ? 'off' : 'auto',
     allowPrivateEndpoints: env.AI_ALLOW_PRIVATE_ENDPOINTS === '1',
     maxInputChars: Number.isFinite(maxInputChars) && maxInputChars > 1000 ? maxInputChars : 120_000,
-    freeModels: FREE_MODELS,
   };
 }
