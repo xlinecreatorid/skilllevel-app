@@ -1,14 +1,14 @@
 # Skilllevel
 
-Platform pembelajaran web fullstack berbahasa Indonesia: 9 modul kurikulum terstruktur, evaluasi kuis adaptif, Tutor AI kontekstual tanpa kebocoran data, autentikasi mandiri, serta sinkronisasi cloud aman.
+Mini-Project, bug akan tetap ada selama pengembangan. Laporkan bug melalui commit
 
 Tautan Produksi: [https://skilllevel-app.vercel.app](https://skilllevel-app.vercel.app)
 
 ---
 
-## Fitur Utama
+## Point
 
-- **Kurikulum Terstruktur (9 Modul)**: Dari dasar peramban web, HTML5 semantik, CSS modern & Flexbox, JavaScript ES6+, DOM manipulation, hingga RESTful API dan integrasi basis data fullstack.
+- **Kurikulum Terstruktur **: Dari dasar peramban web, HTML5 semantik, CSS modern & Flexbox, JavaScript ES6+, DOM manipulation, hingga RESTful API dan integrasi basis data fullstack.
 - **Evaluasi Kuis Adaptif**: Bank soal 10 butir per modul dengan opsi acak, pembahasan mendalam, serta kalkulasi perolehan XP dan level belajar.
 - **Tutor AI Berkonteks Modul**: Asisten belajar interaktif yang dikunci secara ketat pada modul yang sedang dipelajari untuk mencegah halusinasi dan kebocoran instruksi sistem.
 - **Model Bawaan Otomatis (Zero-Config)**: Sistem otomatis menggunakan model bawaan **Agnes 2.5 Flash** dan **Mercury-3** dengan mekanisme fallback cerdas saat terjadi kendala jaringan.
@@ -18,9 +18,9 @@ Tautan Produksi: [https://skilllevel-app.vercel.app](https://skilllevel-app.verc
 
 ---
 
-## Menjalankan Aplikasi
+## How to Run
 
-### 1. Pengembangan Lokal (Development)
+### 1. Local-Test
 
 ```bash
 # Pasang dependensi
@@ -33,7 +33,7 @@ cp .env.example .env       # Windows PowerShell: copy .env.example .env
 npm run dev                # Buka http://localhost:5173
 ```
 
-### 2. Mode Produksi Lokal (Production)
+### 2. Production
 
 ```bash
 npm run build
@@ -44,7 +44,7 @@ npm start                  # Server produksi di port 3000
 
 ---
 
-## Konfigurasi Lingkungan (`.env`)
+## \.env
 
 Aplikasi menggunakan konfigurasi fleksibel dengan dukungan model bawaan ganda dan multi-kunci cadangan:
 
@@ -65,7 +65,7 @@ Aplikasi menggunakan konfigurasi fleksibel dengan dukungan model bawaan ganda da
 
 ---
 
-## Konfigurasi Provider AI Mandiri
+## AI Configuration
 
 Pengguna yang ingin menggunakan endpoint dan kredensial pribadi dapat mengaturnya melalui tombol **Pengaturan AI** di bilah navigasi:
 
@@ -78,7 +78,7 @@ Jika kolom konfigurasi dikosongkan, aplikasi secara otomatis kembali menggunakan
 
 ---
 
-## Arsitektur Keamanan & Privasi
+## Safety control
 
 - **Penyembunyian Kredensial Server**: Kunci API server Agnes dan Mercury tidak pernah dikirim ke peramban pengguna. Endpoint `/api/ai/health` hanya menampilkan status kesiapan dan nama model publik.
 - **Proteksi SSRF (Server-Side Request Forgery)**: Fungsi `validateEndpoint` memblokir skema non-HTTPS, kredensial di URL, serta alamat IP jaringan privat (`localhost`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `127.0.0.1`, dll).
@@ -88,7 +88,7 @@ Jika kolom konfigurasi dikosongkan, aplikasi secara otomatis kembali menggunakan
 
 ---
 
-## Kurikulum 9 Modul Pembelajaran
+## built-in module
 
 | No | Modul Kurikulum | Topik Utama |
 | --- | --- | --- |
@@ -104,21 +104,7 @@ Jika kolom konfigurasi dikosongkan, aplikasi secara otomatis kembali menggunakan
 
 Setiap modul dilengkapi materi konsep, contoh kode nyata, daftar isi interaktif, tip performa, serta evaluasi kuis 10 soal adaptif.
 
----
-
-## Desain Figma & Arsitektur Sistem
-
-Arsitektur desain aplikasi diorganisasi secara modular berbasis alur fitur (*Flow-based Architecture*) dengan artboard desktop standar 1440x900 berbasis vektor asli (*vector node tree*):
-
-- **01 Authentication Flow**: [Figma File 01](https://www.figma.com/design/DogKwsWdp8R8plI3GiaRW1) (Form Login & Register mandiri)
-- **02 Dashboard & Curriculum**: [Figma File 02](https://www.figma.com/design/MKtNdIT96Yq5greixL1UMy) (Dasbor Belajar & Katalog 9 Modul)
-- **03 Interactive Learning & AI Tutor**: [Figma File 03](https://www.figma.com/design/03imbc2TMZmTUndZyw6Q6n) (Detail Modul, Kuis Adaptif, Drawer AI Tutor)
-- **04 Settings & Modals**: [Figma File 04](https://www.figma.com/design/qoM6bDqhnTvY2rzv8kRV6a) (Modal Konfigurasi Provider Mandiri)
-- **Flowchart & System Board**: [FigJam Architecture Board](https://www.figma.com/board/pYWqsjI9QUFtjXpW0FdAOc) (Diagram alur sistem, batas keamanan, dan siklus sinkronisasi)
-
----
-
-## Skrip yang Tersedia
+## Command
 
 | Perintah | Kegunaan |
 | --- | --- |
@@ -128,33 +114,3 @@ Arsitektur desain aplikasi diorganisasi secara modular berbasis alur fitur (*Flo
 | `npm run lint` | Memeriksa validitas sintaks seluruh 13 berkas JavaScript utama |
 | `npm test` | Menjalankan 45 pengujian unit dan keamanan otomatis (`node --test`) |
 | `npm run figma:sync` | Mengenerate 8 artboard vektor desktop 1440x900 dari kode proyek ke folder `design_exports/` |
-
----
-
-## Struktur Proyek
-
-```
-server/
-  env.js         Pembacaan konfigurasi lingkungan, parsing multi-kunci Agnes & Mercury
-  security.js    Redaksi rahasia, validasi endpoint publik, pembatas frekuensi permintaan
-  leakGuard.js   Deteksi anti-injection, sanitasi output AI, deteksi repetisi loop
-  aiProxy.js     Proxy inferensi model bawaan & mandiri, fallback otomatis, streaming
-  handler.js     Handler endpoint serverless /api/ai/health dan /api/ai/chat
-  index.js       Server produksi Node.js penyaji dist/ dan API
-  test/          Suite 45 pengujian unit otomatis (security, env, lib, production)
-src/
-  App.jsx        Komponen utama perakit navigasi dan state global
-  views/         LoginView, DashboardView, ModuleDetailView, QuizView, TutorView, UploadView
-  components/    Komponen UI, SettingsDialog, Markdown, Tag, Field, Button
-  lib/           supabaseClient, aiClient, chatContext, module, quiz, quizRun, crypto, i18n
-  data/          curriculum.js (Kurikulum 9 modul bawaan beserta bank soal)
-design_exports/  Ekspor lokal 8 artboard vektor SVG 1440x900
-scripts/         Skrip verifikasi lint, pengujian, build, dan figma:sync
-```
-
----
-
-## CI/CD & Deployment
-
-- **GitHub Actions Pipeline**: Menguji kepatuhan lint, 45 unit tests, serta verifikasi build produksi pada setiap aktivitas *push* ke branch `main`.
-- **Produksi Otomatis Vercel**: Deployment terintegrasi secara otomatis dan langsung aktif saat alur CI berstatus hijau.
