@@ -33,8 +33,8 @@ export const DICTIONARY = {
 
     // Dashboard
     dash_eyebrow: '',
-    dash_title: 'Belajar cara kerja web dari browser sampai server.',
-    dash_desc: 'Materi berurutan dengan contoh nyata, latihan kuis per modul, dan tanya jawab tutor teknis.',
+    dash_title: 'Belajar dan selesaikan kuis dengan AI',
+    dash_desc: 'Cari tau cara kerjanya, pelajarin modulnya, selesaikan kuisnya.',
     dash_continue: 'Lanjut ke Modul {order}: {title}',
     dash_repeat_quiz: 'Semua modul selesai, ulangi kuis evaluasi',
     dash_ask_tutor: 'Tanya Tutor AI',
@@ -207,8 +207,8 @@ export const DICTIONARY = {
 
     // Dashboard
     dash_eyebrow: '',
-    dash_title: 'Learn how the web works from browser to server.',
-    dash_desc: 'Step-by-step lessons with practical code examples, quizzes for every module, and on-demand tutor guidance.',
+    dash_title: 'Learn and solve quizzes with AI',
+    dash_desc: 'Find out how it works, study the modules, solve the quizzes.',
     dash_continue: 'Continue to Module {order}: {title}',
     dash_repeat_quiz: 'All modules completed, repeat evaluation quiz',
     dash_ask_tutor: 'Ask AI Tutor',
