@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Shell } from './components/Shell.jsx';
 import { SettingsDialog } from './components/Settings.jsx';
 import { AuthModal } from './components/AuthModal.jsx';
+import { LoginView } from './views/LoginView.jsx';
 import { Dashboard } from './views/Dashboard.jsx';
 import { Modules } from './views/Modules.jsx';
 import { ModuleDetail } from './views/ModuleDetail.jsx';
@@ -48,6 +49,7 @@ function AppContent() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const mainRef = useRef(null);
 
   const materials = useMemo(() => [...builtinMaterials(), ...uploaded], [uploaded]);
@@ -59,12 +61,20 @@ function AppContent() {
       if (alive) setServerInfo(info);
     });
 
-    getCurrentUser().then((u) => {
-      if (alive && u) setUser(u);
-    });
+    getCurrentUser()
+      .then((u) => {
+        if (alive) {
+          if (u) setUser(u);
+          setAuthLoading(false);
+        }
+      })
+      .catch(() => {
+        if (alive) setAuthLoading(false);
+      });
 
     const unsubscribe = subscribeAuthChanges((authUser) => {
       setUser(authUser);
+      setAuthLoading(false);
       if (authUser?.id) {
         loadProgressFromCloud(authUser.id).then((cloudProgress) => {
           if (cloudProgress) {
@@ -169,6 +179,29 @@ function AppContent() {
     provider: settings.provider || 'openai',
     apiKey: customKey,
   };
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--paper)] text-[var(--ink)]">
+        <div className="text-center">
+          <span className="font-serif text-[1.75rem] tracking-tight">Skilllevel</span>
+          <p className="mt-2 font-mono text-[0.8125rem] text-[var(--ink-soft)] animate-pulse">
+            Memverifikasi status sesi...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <LoginView
+        onAuthSuccess={(authUser) => {
+          setUser(authUser);
+        }}
+      />
+    );
+  }
 
   return (
     <>

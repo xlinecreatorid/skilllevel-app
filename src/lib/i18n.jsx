@@ -155,6 +155,16 @@ export const DICTIONARY = {
     auth_sso_domain_label: 'Domain Institusi / Kampus',
     auth_sso_btn: 'Masuk melalui Gerbang SSO',
     auth_logged_as: 'Masuk sebagai',
+    login_gate_eyebrow: 'Gerbang Autentikasi',
+    login_gate_title: 'Masuk ke Platform Pembelajaran',
+    login_gate_subtitle: 'Akses penuh ke kurikulum web, kuis adaptif, dan AI Tutor memerlukan autentikasi resmi.',
+    login_gate_security: 'Data progres belajar dienkripsi secara end-to-end (AES-256) dan dilindungi oleh Supabase Authentication.',
+    login_verifying: 'Memverifikasi status sesi...',
+    login_features_title: 'Fitur yang Anda Dapatkan Setelah Masuk:',
+    login_feat_curriculum: 'Akses 9 modul pembelajaran web fullstack terstruktur.',
+    login_feat_quiz: 'Evaluasi berkala dengan kuis adaptif dan pembahasan mendalam.',
+    login_feat_tutor: 'Tutor AI interaktif berkonteks modul tanpa risiko kebocoran data.',
+    login_feat_cloud: 'Sinkronisasi cloud otomatis dan penyimpanan aman terenkripsi.',
   },
   en: {
     // Navigation
@@ -308,6 +318,16 @@ export const DICTIONARY = {
     auth_sso_domain_label: 'Institutional Domain',
     auth_sso_btn: 'Authenticate via Enterprise SSO',
     auth_logged_as: 'Signed in as',
+    login_gate_eyebrow: 'Authentication Gate',
+    login_gate_title: 'Sign In to Learning Platform',
+    login_gate_subtitle: 'Full access to web curriculum, adaptive quizzes, and AI Tutor requires verified authentication.',
+    login_gate_security: 'Learning progress data is end-to-end encrypted (AES-256) and secured by Supabase Authentication.',
+    login_verifying: 'Verifying session status...',
+    login_features_title: 'Features unlocked upon authentication:',
+    login_feat_curriculum: 'Access to 9 structured fullstack web learning modules.',
+    login_feat_quiz: 'Adaptive quizzes with detailed technical explanations.',
+    login_feat_tutor: 'Interactive AI Tutor bounded by module context and leak guards.',
+    login_feat_cloud: 'Automated end-to-end encrypted cloud synchronization.',
   },
 };
 
