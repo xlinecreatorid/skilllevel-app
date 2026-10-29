@@ -109,11 +109,11 @@ export function SettingsDialog({
                 {isSelfProviderConfigured ? t('set_self_provider_active') : t('set_builtin_active')}
               </Tag>
             </div>
-            <p className="text-[0.8125rem] text-[var(--ink-soft)]">
-              {isSelfProviderConfigured
-                ? t('set_self_provider_desc')
-                : t('set_builtin_models_desc')}
-            </p>
+            {isSelfProviderConfigured ? (
+              <p className="text-[0.8125rem] text-[var(--ink-soft)]">
+                {t('set_self_provider_desc')}
+              </p>
+            ) : null}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

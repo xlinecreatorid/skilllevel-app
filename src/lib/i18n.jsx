@@ -133,9 +133,8 @@ export const DICTIONARY = {
 
     // Pengaturan AI (Khusus Provider Mandiri)
     set_title: 'Konfigurasi Provider Mandiri',
-    set_desc: 'Khusus pengguna yang ingin memakai endpoint dan kunci AI pribadi. Jika tidak diatur, aplikasi otomatis memakai model bawaan (Agnes & Mercury).',
+    set_desc: 'Khusus pengguna yang ingin memakai endpoint dan kunci AI pribadi. Jika tidak diatur, aplikasi otomatis memakai model bawaan.',
     set_builtin_active: 'Model Bawaan Otomatis Aktif',
-    set_builtin_models_desc: 'Agnes 2.5 Flash & Mercury-3 (Otomatis beralih saat kendala jaringan).',
     set_self_provider_active: 'Provider Mandiri Aktif',
     set_self_provider_desc: 'Permintaan AI diarahkan ke endpoint & kredensial kustom Anda.',
     set_reset_builtin: 'Reset ke Model Bawaan',
@@ -308,9 +307,8 @@ export const DICTIONARY = {
 
     // Settings (Self Provider Only)
     set_title: 'Self Provider Configuration',
-    set_desc: 'For users who want to use their own personal AI endpoint and key. If left empty, the app automatically uses built-in models (Agnes & Mercury).',
+    set_desc: 'For users who want to use their own personal AI endpoint and key. If left empty, the app automatically uses built-in models.',
     set_builtin_active: 'Built-in Models Active',
-    set_builtin_models_desc: 'Agnes 2.5 Flash & Mercury-3 (Automatic fallback on network issues).',
     set_self_provider_active: 'Self Provider Active',
     set_self_provider_desc: 'AI requests are routed to your custom endpoint & credentials.',
     set_reset_builtin: 'Reset to Built-in Models',
