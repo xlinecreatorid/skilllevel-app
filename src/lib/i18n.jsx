@@ -12,7 +12,7 @@ export const DICTIONARY = {
     nav_upload: 'Unggah',
     nav_progress: 'Progres',
     skip_to_content: 'Lompat ke konten',
-    app_subtitle: '',
+    app_subtitle: 'Make it simple',
     footer_note: 'Progres belajar tersimpan aman secara end-to-end.',
 
     // Tombol & Aksi Umum
@@ -32,7 +32,7 @@ export const DICTIONARY = {
     btn_search: 'Cari',
 
     // Dashboard
-    dash_eyebrow: '',
+    dash_eyebrow: 'Skill Level',
     dash_title: 'Belajar dan selesaikan kuis dengan AI',
     dash_desc: 'Cari tau cara kerjanya, pelajarin modulnya, selesaikan kuisnya.',
     dash_continue: 'Lanjut ke Modul {order}: {title}',
@@ -186,7 +186,7 @@ export const DICTIONARY = {
     nav_upload: 'Upload',
     nav_progress: 'Progress',
     skip_to_content: 'Skip to content',
-    app_subtitle: '',
+    app_subtitle: 'Make it simple',
     footer_note: 'Learning progress stored securely with end-to-end encryption.',
 
     // Common Buttons & Actions
@@ -206,7 +206,7 @@ export const DICTIONARY = {
     btn_search: 'Search',
 
     // Dashboard
-    dash_eyebrow: '',
+    dash_eyebrow: 'Skill Level',
     dash_title: 'Learn and solve quizzes with AI',
     dash_desc: 'Find out how it works, study the modules, solve the quizzes.',
     dash_continue: 'Continue to Module {order}: {title}',
