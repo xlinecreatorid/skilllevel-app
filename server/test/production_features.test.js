@@ -34,6 +34,33 @@ test('createLoopDetector mendeteksi dan menghentikan pengulangan kalimat berulan
   assert.equal(detector.isStopped(), true);
 });
 
+test('createLoopDetector tidak memutus streaming normal dengan banyak potongan chunk', () => {
+  const detector = createLoopDetector({ maxRepetitions: 3 });
+  const chunks = [
+    'Berikut penjelasan lengkap dari modul "Cara Browser Menampilkan Halaman":\n\n---\n\n',
+    'Ringkasan\n',
+    'Browser meminta berkas ke server, menyusun struktur halaman, lalu menggambarnya ke layar. ',
+    'Satu ',
+    'per ',
+    'satu ',
+    'langkah ',
+    'dilakukan ',
+    'secara ',
+    'berurutan ',
+    'mulai ',
+    'dari ',
+    'DNS lookup, ',
+    'TCP handshake, ',
+    'hingga parsing berkas HTML dan CSS.',
+  ];
+
+  for (const c of chunks) {
+    const res = detector.push(c);
+    assert.equal(res.stopped, false, `Chunk tidak boleh dihentikan palsu: ${c}`);
+  }
+  assert.equal(detector.isStopped(), false);
+});
+
 test('encryptServer dan decryptServer bekerja secara bolak-balik (round-trip)', () => {
   const original = 'Data rahasia pengguna kuis 100% lulus';
   const encrypted = encryptServer(original);

@@ -62,20 +62,45 @@ export function sanitizeAiOutput(text = '', secrets = [], systemSnippet = '') {
 
 /** Detektor repetisi (looping) untuk memotong respons model yang berulang tanpa henti. */
 export function createLoopDetector({ maxRepetitions = 3 } = {}) {
-  const phraseCounts = new Map();
   let buffer = '';
   let stopped = false;
+  let lastChunk = '';
+  let consecutiveChunkRepeats = 0;
 
   return {
     push(chunk) {
       if (stopped) return { accept: false, text: '', stopped: true };
-      const normalizedChunk = String(chunk ?? '').trim();
-      buffer += (buffer.length ? ' ' : '') + normalizedChunk;
+      const strChunk = String(chunk ?? '');
+      buffer += strChunk;
 
-      if (normalizedChunk.length >= 10) {
-        const count = (phraseCounts.get(normalizedChunk) || 0) + 1;
-        phraseCounts.set(normalizedChunk, count);
+      const trimmedChunk = strChunk.trim();
+      if (trimmedChunk.length >= 10) {
+        if (trimmedChunk === lastChunk) {
+          consecutiveChunkRepeats += 1;
+          if (consecutiveChunkRepeats >= maxRepetitions) {
+            stopped = true;
+            return {
+              accept: false,
+              text: '\n\n[Respons dihentikan untuk mencegah looping berulang]',
+              stopped: true,
+            };
+          }
+        } else {
+          consecutiveChunkRepeats = 1;
+          lastChunk = trimmedChunk;
+        }
+      }
 
+      // Deteksi kalimat berulang aktual yang muncul lebih dari batas di dalam akumulasi teks
+      const sentences = buffer
+        .split(/(?<=[.!?\n])\s*/)
+        .map((s) => s.trim())
+        .filter((s) => s.length >= 15);
+
+      const freq = new Map();
+      for (const s of sentences) {
+        const count = (freq.get(s) || 0) + 1;
+        freq.set(s, count);
         if (count >= maxRepetitions) {
           stopped = true;
           return {
@@ -86,31 +111,13 @@ export function createLoopDetector({ maxRepetitions = 3 } = {}) {
         }
       }
 
-      // Deteksi kalimat berulang dari buffer
-      const sentences = buffer.split(/(?<=[.!?\n])\s+/);
-      for (const s of sentences) {
-        const clean = s.trim();
-        if (clean.length >= 15) {
-          const sCount = (phraseCounts.get(clean) || 0) + 1;
-          phraseCounts.set(clean, sCount);
-          if (sCount >= maxRepetitions) {
-            stopped = true;
-            return {
-              accept: false,
-              text: '\n\n[Respons dihentikan untuk mencegah looping berulang]',
-              stopped: true,
-            };
-          }
-        }
-      }
-
       return { accept: true, text: chunk, stopped: false };
     },
     isStopped() {
       return stopped;
     },
     filterFullText(text) {
-      const lines = text.split('\n');
+      const lines = String(text ?? '').split('\n');
       const filtered = [];
       let repeatCount = 0;
       let lastLine = '';
