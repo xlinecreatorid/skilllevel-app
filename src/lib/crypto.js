@@ -77,3 +77,12 @@ export async function decryptData(cipherBase64, customSecret = null) {
     return cipherBase64;
   }
 }
+
+export async function hashPassword(password, username = '') {
+  const enc = new TextEncoder();
+  const salt = `sl_auth_${String(username).trim().toLowerCase()}`;
+  const data = enc.encode(`${salt}:${password}`);
+  const hashBuf = await crypto.subtle.digest('SHA-256', data);
+  const hashArr = Array.from(new Uint8Array(hashBuf));
+  return hashArr.map((b) => b.toString(16).padStart(2, '0')).join('');
+}
