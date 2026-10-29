@@ -1,18 +1,12 @@
-import { useState, useRef } from 'react';
-import { Button, Field, Notice, inputClass } from '../components/ui.jsx';
-import { signInWithGoogle, signInWithAdminSSO, signInAdminTemp } from '../lib/supabaseClient.js';
+import { useState } from 'react';
+import { Button, Notice } from '../components/ui.jsx';
+import { signInWithGoogle } from '../lib/supabaseClient.js';
 import { useI18n } from '../lib/i18n.jsx';
 
 export function LoginView({ onAuthSuccess }) {
   const { lang, setLang, t } = useI18n();
-  const [tab, setTab] = useState('google');
-  const [ssoDomain, setSsoDomain] = useState('');
-  const [adminUsername, setAdminUsername] = useState('');
-  const [adminPassword, setAdminPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const ssoInputRef = useRef(null);
-  const adminInputRef = useRef(null);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -30,48 +24,9 @@ export function LoginView({ onAuthSuccess }) {
     }
   };
 
-  const handleSsoSubmit = async (e) => {
-    e.preventDefault();
-    const domain = ssoDomain.trim();
-    if (!domain) {
-      setError('Masukkan domain kampus atau institusi Anda.');
-      return;
-    }
-    setLoading(true);
-    setError('');
-    try {
-      const res = await signInWithAdminSSO(domain);
-      if (res?.error) throw res.error;
-      if (res?.data?.user) {
-        onAuthSuccess?.(res.data.user);
-      }
-    } catch (err) {
-      setError(err?.message || 'Gagal melakukan autentikasi SSO.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAdminSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    try {
-      const res = await signInAdminTemp(adminUsername, adminPassword);
-      if (res?.error) throw res.error;
-      if (res?.data?.user) {
-        onAuthSuccess?.(res.data.user);
-      }
-    } catch (err) {
-      setError(err?.message || 'Kredensial admin salah.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="flex min-h-screen flex-col bg-[var(--paper)] text-[var(--ink)]">
-      {/* Header Halaman Login */}
+      {/* Header */}
       <header className="border-b border-[var(--rule)] bg-[var(--paper-raised)]">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-5 py-4 sm:px-8">
           <div className="flex items-baseline gap-3">
@@ -113,7 +68,7 @@ export function LoginView({ onAuthSuccess }) {
         </div>
       </header>
 
-      {/* Konten Utama: Login Card */}
+      {/* Konten Utama: Gerbang Login */}
       <main className="flex flex-1 items-center justify-center px-4 py-12 sm:py-20">
         <div className="w-full max-w-lg border border-[var(--rule-strong)] bg-[var(--paper-raised)] p-6 shadow-[0_20px_50px_-20px_rgba(27,26,23,0.35)] sm:p-9">
           {/* Eyebrow & Judul */}
@@ -123,7 +78,7 @@ export function LoginView({ onAuthSuccess }) {
                 {t('login_gate_eyebrow')}
               </span>
               <span className="font-mono text-[0.6875rem] uppercase text-[var(--ink-faint)]">
-                OAuth 2.0 / SSO
+                OAuth 2.0
               </span>
             </div>
             <h1 className="mt-1 font-serif text-[1.625rem] leading-tight text-[var(--ink)]">
@@ -134,182 +89,49 @@ export function LoginView({ onAuthSuccess }) {
             </p>
           </div>
 
-          {/* Tab Selector */}
-          <div className="mb-6 flex border-b border-[var(--rule)] text-[0.875rem]">
-            <button
-              type="button"
-              onClick={() => {
-                setTab('google');
-                setError('');
-              }}
-              className={`border-b-2 pb-2.5 font-semibold transition-colors ${
-                tab === 'google'
-                  ? 'border-[var(--accent)] text-[var(--ink)]'
-                  : 'border-transparent text-[var(--ink-faint)] hover:text-[var(--ink)]'
-              }`}
-            >
-              {t('auth_google_tab')}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setTab('sso');
-                setError('');
-                setTimeout(() => ssoInputRef.current?.focus(), 50);
-              }}
-              className={`ml-5 border-b-2 pb-2.5 font-semibold transition-colors ${
-                tab === 'sso'
-                  ? 'border-[var(--accent)] text-[var(--ink)]'
-                  : 'border-transparent text-[var(--ink-faint)] hover:text-[var(--ink)]'
-              }`}
-            >
-              {t('auth_sso_tab')}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setTab('admin');
-                setError('');
-                setTimeout(() => adminInputRef.current?.focus(), 50);
-              }}
-              className={`ml-5 border-b-2 pb-2.5 font-semibold transition-colors ${
-                tab === 'admin'
-                  ? 'border-[var(--accent)] text-[var(--ink)]'
-                  : 'border-transparent text-[var(--ink-faint)] hover:text-[var(--ink)]'
-              }`}
-            >
-              {t('auth_admin_tab')}
-            </button>
-          </div>
-
-          {/* Error Message */}
+          {/* Pesan Kesalahan */}
           {error ? (
             <div className="mb-5">
               <Notice tone="danger">{error}</Notice>
             </div>
           ) : null}
 
-          {/* Tab 1: Akun Google */}
-          {tab === 'google' ? (
-            <div className="space-y-4">
-              <p className="text-[0.875rem] leading-relaxed text-[var(--ink-soft)]">
-                {lang === 'id'
-                  ? 'Gunakan akun Google Anda untuk masuk secara instan. Data sesi dan riwayat belajar disimpan terenkripsi.'
-                  : 'Sign in instantly with your Google account. Session and learning history are encrypted end-to-end.'}
-              </p>
+          {/* Form Masuk Google */}
+          <div className="space-y-4">
+            <p className="text-[0.875rem] leading-relaxed text-[var(--ink-soft)]">
+              {lang === 'id'
+                ? 'Gunakan akun Google Anda untuk masuk secara instan. Data sesi dan riwayat belajar disimpan terenkripsi.'
+                : 'Sign in instantly with your Google account. Session and learning history are encrypted end-to-end.'}
+            </p>
 
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full justify-center gap-3 py-3 font-semibold shadow-sm"
-                onClick={handleGoogleLogin}
-                disabled={loading}
-              >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    fill="currentColor"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                  />
-                </svg>
-                {loading ? 'Menghubungkan...' : t('auth_google_btn')}
-              </Button>
-            </div>
-          ) : null}
-
-          {/* Tab 2: SSO Admin */}
-          {tab === 'sso' ? (
-            <form onSubmit={handleSsoSubmit} className="space-y-4">
-              <p className="text-[0.875rem] leading-relaxed text-[var(--ink-soft)]">
-                {t('auth_sso_desc')}
-              </p>
-
-              <Field
-                label={t('auth_sso_domain_label')}
-                htmlFor="login-sso-domain"
-                hint="Contoh: kampus.ac.id atau institusi.edu"
-              >
-                <input
-                  id="login-sso-domain"
-                  ref={ssoInputRef}
-                  className={inputClass}
-                  value={ssoDomain}
-                  onChange={(e) => setSsoDomain(e.target.value)}
-                  placeholder="kampus.ac.id"
-                  autoComplete="organization"
-                  spellCheck="false"
-                  disabled={loading}
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full justify-center gap-3 py-3 font-semibold shadow-sm"
+              onClick={handleGoogleLogin}
+              disabled={loading}
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                 />
-              </Field>
-
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                className="w-full justify-center py-3 font-semibold"
-                disabled={loading || !ssoDomain.trim()}
-              >
-                {loading ? 'Memverifikasi...' : t('auth_sso_btn')}
-              </Button>
-            </form>
-          ) : null}
-
-          {/* Tab 3: Login Admin (Temp) */}
-          {tab === 'admin' ? (
-            <form onSubmit={handleAdminSubmit} className="space-y-4">
-              <p className="text-[0.875rem] leading-relaxed text-[var(--ink-soft)]">
-                {t('auth_admin_desc')}
-              </p>
-
-              <Field label={t('auth_admin_user_label')} htmlFor="admin-user-input">
-                <input
-                  id="admin-user-input"
-                  ref={adminInputRef}
-                  className={inputClass}
-                  value={adminUsername}
-                  onChange={(e) => setAdminUsername(e.target.value)}
-                  placeholder="admin"
-                  autoComplete="username"
-                  spellCheck="false"
-                  disabled={loading}
+                <path
+                  fill="currentColor"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
                 />
-              </Field>
-
-              <Field label={t('auth_admin_pass_label')} htmlFor="admin-pass-input">
-                <input
-                  id="admin-pass-input"
-                  type="password"
-                  className={inputClass}
-                  value={adminPassword}
-                  onChange={(e) => setAdminPassword(e.target.value)}
-                  placeholder="admin"
-                  autoComplete="current-password"
-                  disabled={loading}
+                <path
+                  fill="currentColor"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
                 />
-              </Field>
-
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                className="w-full justify-center py-3 font-semibold"
-                disabled={loading || !adminUsername.trim() || !adminPassword.trim()}
-              >
-                {loading ? 'Memverifikasi...' : t('auth_admin_btn')}
-              </Button>
-            </form>
-          ) : null}
+                <path
+                  fill="currentColor"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
+              </svg>
+              {loading ? 'Menghubungkan...' : t('auth_google_btn')}
+            </Button>
+          </div>
 
           {/* Catatan Keamanan */}
           <div className="mt-8 border-t border-[var(--rule)] pt-4 text-center">

@@ -38,50 +38,6 @@ export async function signInWithGoogle() {
   });
 }
 
-export async function signInWithAdminSSO(domain = '') {
-  const cleanDomain = String(domain || '').trim().toLowerCase();
-  if (!cleanDomain) {
-    return { data: null, error: new Error('Domain institusi/kampus harus diisi.') };
-  }
-
-  if (!isSupabaseConfigured) {
-    const mockAdmin = {
-      id: `adm_${Date.now()}`,
-      email: `admin@${cleanDomain}`,
-      user_metadata: { full_name: `Admin Kampus (${cleanDomain})`, avatar_url: '' },
-      role: 'admin',
-    };
-    localStorage.setItem('sl_auth_mock_user', JSON.stringify(mockAdmin));
-    return { data: { user: mockAdmin }, error: null };
-  }
-
-  return await supabase.auth.signInWithSSO({
-    domain: cleanDomain,
-    options: {
-      redirectTo: window.location.origin,
-    },
-  });
-}
-
-export async function signInAdminTemp(username = '', password = '') {
-  const u = String(username || '').trim();
-  const p = String(password || '').trim();
-  if (u === 'admin' && p === 'admin') {
-    const adminUser = {
-      id: 'admin_master',
-      email: 'admin@kampus.ac.id',
-      user_metadata: { full_name: 'Administrator (Sistem)' },
-      role: 'admin',
-    };
-    localStorage.setItem('sl_auth_mock_user', JSON.stringify(adminUser));
-    return { data: { user: adminUser }, error: null };
-  }
-  return {
-    data: null,
-    error: new Error('Username atau password salah. Gunakan admin / admin.'),
-  };
-}
-
 export async function signOut() {
   localStorage.removeItem('sl_auth_mock_user');
   if (isSupabaseConfigured) {
