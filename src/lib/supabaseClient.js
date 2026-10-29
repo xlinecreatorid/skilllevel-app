@@ -63,39 +63,99 @@ export async function signInWithAdminSSO(domain = '') {
   });
 }
 
+export async function signInAdminTemp(username = '', password = '') {
+  const u = String(username || '').trim();
+  const p = String(password || '').trim();
+  if (u === 'admin' && p === 'admin') {
+    const adminUser = {
+      id: 'admin_master',
+      email: 'admin@kampus.ac.id',
+      user_metadata: { full_name: 'Administrator (Sistem)' },
+      role: 'admin',
+    };
+    localStorage.setItem('sl_auth_mock_user', JSON.stringify(adminUser));
+    return { data: { user: adminUser }, error: null };
+  }
+  return {
+    data: null,
+    error: new Error('Username atau password salah. Gunakan admin / admin.'),
+  };
+}
+
 export async function signOut() {
   localStorage.removeItem('sl_auth_mock_user');
   if (isSupabaseConfigured) {
-    return await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      /* abaikan error logout */
+    }
   }
   return { error: null };
 }
 
 export async function getCurrentUser() {
-  if (!isSupabaseConfigured) {
-    const raw = localStorage.getItem('sl_auth_mock_user');
-    return raw ? JSON.parse(raw) : null;
+  const raw = localStorage.getItem('sl_auth_mock_user');
+  if (raw) {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      /* abaikan */
+    }
   }
-  const { data } = await supabase.auth.getUser();
-  return data?.user || null;
+  if (!isSupabaseConfigured) {
+    return null;
+  }
+  try {
+    const { data } = await supabase.auth.getUser();
+    return data?.user || null;
+  } catch {
+    return null;
+  }
 }
 
 export function subscribeAuthChanges(callback) {
-  if (!isSupabaseConfigured) {
-    const raw = localStorage.getItem('sl_auth_mock_user');
-    callback(raw ? JSON.parse(raw) : null);
-    const handler = () => {
-      const u = localStorage.getItem('sl_auth_mock_user');
-      callback(u ? JSON.parse(u) : null);
-    };
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
+  const raw = localStorage.getItem('sl_auth_mock_user');
+  if (raw) {
+    try {
+      callback(JSON.parse(raw));
+    } catch {
+      /* abaikan */
+    }
   }
 
-  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-    callback(session?.user || null);
-  });
-  return () => subscription.unsubscribe();
+  const handler = () => {
+    const u = localStorage.getItem('sl_auth_mock_user');
+    if (u) {
+      try {
+        callback(JSON.parse(u));
+        return;
+      } catch {
+        /* abaikan */
+      }
+    }
+    if (!isSupabaseConfigured) {
+      callback(null);
+    }
+  };
+  window.addEventListener('storage', handler);
+
+  let unsubscribeSupabase = () => {};
+  if (isSupabaseConfigured) {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      const currentMock = localStorage.getItem('sl_auth_mock_user');
+      if (currentMock) return;
+      callback(session?.user || null);
+    });
+    unsubscribeSupabase = () => subscription.unsubscribe();
+  }
+
+  return () => {
+    window.removeEventListener('storage', handler);
+    unsubscribeSupabase();
+  };
 }
 
 /** Simpan progres terenkripsi end-to-end ke database Supabase */

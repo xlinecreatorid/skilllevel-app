@@ -1,15 +1,18 @@
 import { useState, useRef } from 'react';
 import { Button, Field, Notice, inputClass } from '../components/ui.jsx';
-import { signInWithGoogle, signInWithAdminSSO } from '../lib/supabaseClient.js';
+import { signInWithGoogle, signInWithAdminSSO, signInAdminTemp } from '../lib/supabaseClient.js';
 import { useI18n } from '../lib/i18n.jsx';
 
 export function LoginView({ onAuthSuccess }) {
   const { lang, setLang, t } = useI18n();
   const [tab, setTab] = useState('google');
   const [ssoDomain, setSsoDomain] = useState('');
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const ssoInputRef = useRef(null);
+  const adminInputRef = useRef(null);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -44,6 +47,23 @@ export function LoginView({ onAuthSuccess }) {
       }
     } catch (err) {
       setError(err?.message || 'Gagal melakukan autentikasi SSO.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdminSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      const res = await signInAdminTemp(adminUsername, adminPassword);
+      if (res?.error) throw res.error;
+      if (res?.data?.user) {
+        onAuthSuccess?.(res.data.user);
+      }
+    } catch (err) {
+      setError(err?.message || 'Kredensial admin salah.');
     } finally {
       setLoading(false);
     }
@@ -94,7 +114,7 @@ export function LoginView({ onAuthSuccess }) {
       </header>
 
       {/* Konten Utama: Login Card */}
-      <main className="flex flex-1 items-center justify-center px-4 py-10 sm:py-16">
+      <main className="flex flex-1 items-center justify-center px-4 py-12 sm:py-20">
         <div className="w-full max-w-lg border border-[var(--rule-strong)] bg-[var(--paper-raised)] p-6 shadow-[0_20px_50px_-20px_rgba(27,26,23,0.35)] sm:p-9">
           {/* Eyebrow & Judul */}
           <div className="mb-6">
@@ -115,14 +135,14 @@ export function LoginView({ onAuthSuccess }) {
           </div>
 
           {/* Tab Selector */}
-          <div className="mb-6 flex border-b border-[var(--rule)]">
+          <div className="mb-6 flex border-b border-[var(--rule)] text-[0.875rem]">
             <button
               type="button"
               onClick={() => {
                 setTab('google');
                 setError('');
               }}
-              className={`border-b-2 pb-2.5 text-[0.875rem] font-semibold transition-colors ${
+              className={`border-b-2 pb-2.5 font-semibold transition-colors ${
                 tab === 'google'
                   ? 'border-[var(--accent)] text-[var(--ink)]'
                   : 'border-transparent text-[var(--ink-faint)] hover:text-[var(--ink)]'
@@ -137,13 +157,28 @@ export function LoginView({ onAuthSuccess }) {
                 setError('');
                 setTimeout(() => ssoInputRef.current?.focus(), 50);
               }}
-              className={`ml-6 border-b-2 pb-2.5 text-[0.875rem] font-semibold transition-colors ${
+              className={`ml-5 border-b-2 pb-2.5 font-semibold transition-colors ${
                 tab === 'sso'
                   ? 'border-[var(--accent)] text-[var(--ink)]'
                   : 'border-transparent text-[var(--ink-faint)] hover:text-[var(--ink)]'
               }`}
             >
               {t('auth_sso_tab')}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTab('admin');
+                setError('');
+                setTimeout(() => adminInputRef.current?.focus(), 50);
+              }}
+              className={`ml-5 border-b-2 pb-2.5 font-semibold transition-colors ${
+                tab === 'admin'
+                  ? 'border-[var(--accent)] text-[var(--ink)]'
+                  : 'border-transparent text-[var(--ink-faint)] hover:text-[var(--ink)]'
+              }`}
+            >
+              {t('auth_admin_tab')}
             </button>
           </div>
 
@@ -154,7 +189,7 @@ export function LoginView({ onAuthSuccess }) {
             </div>
           ) : null}
 
-          {/* Form Tab Konten */}
+          {/* Tab 1: Akun Google */}
           {tab === 'google' ? (
             <div className="space-y-4">
               <p className="text-[0.875rem] leading-relaxed text-[var(--ink-soft)]">
@@ -191,7 +226,10 @@ export function LoginView({ onAuthSuccess }) {
                 {loading ? 'Menghubungkan...' : t('auth_google_btn')}
               </Button>
             </div>
-          ) : (
+          ) : null}
+
+          {/* Tab 2: SSO Admin */}
+          {tab === 'sso' ? (
             <form onSubmit={handleSsoSubmit} className="space-y-4">
               <p className="text-[0.875rem] leading-relaxed text-[var(--ink-soft)]">
                 {t('auth_sso_desc')}
@@ -225,35 +263,56 @@ export function LoginView({ onAuthSuccess }) {
                 {loading ? 'Memverifikasi...' : t('auth_sso_btn')}
               </Button>
             </form>
-          )}
+          ) : null}
 
-          {/* Daftar Fitur yang Dibuka */}
-          <div className="mt-8 border-t border-[var(--rule)] pt-5">
-            <p className="text-[0.75rem] font-semibold uppercase tracking-[0.1em] text-[var(--ink-faint)]">
-              {t('login_features_title')}
-            </p>
-            <ul className="mt-3 space-y-2 text-[0.8125rem] text-[var(--ink-soft)]">
-              <li className="flex items-start gap-2">
-                <span className="font-mono text-[var(--accent)]">•</span>
-                <span>{t('login_feat_curriculum')}</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-mono text-[var(--accent)]">•</span>
-                <span>{t('login_feat_quiz')}</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-mono text-[var(--accent)]">•</span>
-                <span>{t('login_feat_tutor')}</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-mono text-[var(--accent)]">•</span>
-                <span>{t('login_feat_cloud')}</span>
-              </li>
-            </ul>
-          </div>
+          {/* Tab 3: Login Admin (Temp) */}
+          {tab === 'admin' ? (
+            <form onSubmit={handleAdminSubmit} className="space-y-4">
+              <p className="text-[0.875rem] leading-relaxed text-[var(--ink-soft)]">
+                {t('auth_admin_desc')}
+              </p>
+
+              <Field label={t('auth_admin_user_label')} htmlFor="admin-user-input">
+                <input
+                  id="admin-user-input"
+                  ref={adminInputRef}
+                  className={inputClass}
+                  value={adminUsername}
+                  onChange={(e) => setAdminUsername(e.target.value)}
+                  placeholder="admin"
+                  autoComplete="username"
+                  spellCheck="false"
+                  disabled={loading}
+                />
+              </Field>
+
+              <Field label={t('auth_admin_pass_label')} htmlFor="admin-pass-input">
+                <input
+                  id="admin-pass-input"
+                  type="password"
+                  className={inputClass}
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  placeholder="admin"
+                  autoComplete="current-password"
+                  disabled={loading}
+                />
+              </Field>
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                className="w-full justify-center py-3 font-semibold"
+                disabled={loading || !adminUsername.trim() || !adminPassword.trim()}
+              >
+                {loading ? 'Memverifikasi...' : t('auth_admin_btn')}
+              </Button>
+            </form>
+          ) : null}
 
           {/* Catatan Keamanan */}
-          <div className="mt-6 border-t border-[var(--rule)] pt-4 text-center">
+          <div className="mt-8 border-t border-[var(--rule)] pt-4 text-center">
             <p className="text-[0.75rem] leading-relaxed text-[var(--ink-faint)]">
               {t('login_gate_security')}
             </p>
