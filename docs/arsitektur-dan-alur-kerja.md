@@ -71,3 +71,16 @@ Data progres belajar, riwayat kuis, dan modul unggahan diamankan secara berlapis
 - **Lapisan Klien**: Modul `src/lib/crypto.js` membuat kunci turunan perangkat (PBKDF2 dengan 100.000 iterasi SHA-256) dan mengenkripsi payload dengan cipher AES-GCM 256-bit beserta IV acak 12-byte.
 - **Transmisi**: Data yang dikirim ke Supabase atau disimpan di penyimpanan lokal berbentuk ciphertext Base64. Pihak ketiga atau penyedia database tidak dapat membaca isi progres maupun modul pribadi tanpa kunci klien.
 - **Lapisan Server**: Modul `server/crypto.js` menyediakan enkripsi simetris AES-256-GCM untuk data sensitif di sisi server menggunakan kunci master terproteksi.
+
+---
+
+## 4. Gerbang Autentikasi Wajib (Mandatory Auth Gate)
+
+Aplikasi menerapkan pengamanan akses wajib (*zero-unauthenticated-access*):
+1. **Pemeriksaan Sesi**: Saat peramban dimuat, `App.jsx` memverifikasi sesi aktif via `getCurrentUser()` dan `subscribeAuthChanges()`. Selama verifikasi, tampilan berada dalam status loading protektif.
+2. **Blokir Akses Tanpa Login**: Jika pengguna belum terautentikasi (`user === null`), antarmuka aplikasi utama (Dashboard, Modul, Kuis, Tutor, Unggah, Progres) sama sekali tidak dirender ke DOM. Pengguna disajikan `LoginView` khusus.
+3. **Pilihan Masuk**: Pengguna wajib masuk melalui salah satu dari dua metode resmi:
+   - **OAuth Google**: Autentikasi berbasis token terverifikasi Google untuk siswa/pengguna umum.
+   - **SSO Admin Kampus**: Autentikasi Single Sign-On institusi berbasis domain akademik (`kampus.ac.id`).
+4. **Sesi & Logout**: Setelah berhasil masuk, status pengguna disimpan dalam sesi Supabase. Tombol keluar (*Sign Out*) akan langsung membersihkan sesi dan mengembalikan antarmuka ke `LoginView`.
+
