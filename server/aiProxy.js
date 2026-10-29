@@ -114,7 +114,8 @@ export function resolveTargets(config, body = {}) {
       m.apiKey ||
       config.apiKey ||
       (m.id.includes('agnes') ? 'sk-Fq20kIW1ReDlBMxEX6FFZQAkBgs8dZSH4P0yKP6o2Nr4MoOe' : '');
-    const pool = [key, ...(config.fallbackKeys || [])].filter(Boolean);
+    const pool =
+      m.keyPool && m.keyPool.length > 0 ? m.keyPool : [key, ...(config.fallbackKeys || [])].filter(Boolean);
 
     return {
       name: m.name,

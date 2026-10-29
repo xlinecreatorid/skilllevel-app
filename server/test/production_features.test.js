@@ -57,6 +57,30 @@ test('readAiEnv memuat konfigurasi model bawaan termasuk agnes dan mercury-3 ser
   assert.equal(agnes.endpoint, 'https://apihub.agnes-ai.com/v1');
 });
 
+test('readAiEnv mendukung Mercury_key dan Agnes_key dengan multi-kunci dipisahkan koma', async () => {
+  const { resolveTargets } = await import('../aiProxy.js');
+  const config = readAiEnv({
+    Mercury: 'https://api.inceptionlabs.ai/v1',
+    Agnes: 'https://apihub.agnes-ai.com/v1',
+    Mercury_key: 'merc_key_1, merc_key_2',
+    Agnes_key: 'agnes_key_1, agnes_key_2, agnes_key_3',
+  });
+
+  const mercury = config.builtinModels.find((m) => m.id === 'mercury-3');
+  assert.equal(mercury.apiKey, 'merc_key_1');
+  assert.deepEqual(mercury.keyPool, ['merc_key_1', 'merc_key_2']);
+
+  const agnes = config.builtinModels.find((m) => m.id === 'agnes-2.5-flash');
+  assert.equal(agnes.apiKey, 'agnes_key_1');
+  assert.deepEqual(agnes.keyPool, ['agnes_key_1', 'agnes_key_2', 'agnes_key_3']);
+
+  const targets = resolveTargets(config, {});
+  const targetAgnes = targets.find((t) => t.model === 'agnes-2.5-flash');
+  assert.deepEqual(targetAgnes.keyPool, ['agnes_key_1', 'agnes_key_2', 'agnes_key_3']);
+  const targetMercury = targets.find((t) => t.model === 'mercury-3');
+  assert.deepEqual(targetMercury.keyPool, ['merc_key_1', 'merc_key_2']);
+});
+
 test('resolveTargets otomatis menggunakan model bawaan agnes dan mercury saat konfigurasi kustom kosong', async () => {
   const { resolveTargets } = await import('../aiProxy.js');
   const config = readAiEnv({});

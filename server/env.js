@@ -51,17 +51,29 @@ export function readAiEnv(env = process.env) {
     .filter(Boolean);
 
   // Model bawaan otomatis: Agnes 2.5 Flash dan Mercury-3 dengan endpoint & kunci terpisah
-  const agnesBaseUrl = (env.AGNES_BASE_URL || 'https://apihub.agnes-ai.com/v1').trim();
+  const agnesBaseUrl = (env.Agnes || env.AGNES_BASE_URL || 'https://apihub.agnes-ai.com/v1').trim();
   const agnesModel = (env.AGNES_MODEL || 'agnes-2.5-flash').trim();
-  const agnesApiKey = (
+  const agnesKeysRaw = (
+    env.Agnes_key ||
+    env.AGNES_KEY ||
     env.AGNES_API_KEY ||
     env.AI_API_KEY ||
     'sk-Fq20kIW1ReDlBMxEX6FFZQAkBgs8dZSH4P0yKP6o2Nr4MoOe'
   ).trim();
+  const agnesKeyList = agnesKeysRaw
+    .split(',')
+    .map((k) => k.trim())
+    .filter(Boolean);
+  const agnesApiKey = agnesKeyList[0] || 'sk-Fq20kIW1ReDlBMxEX6FFZQAkBgs8dZSH4P0yKP6o2Nr4MoOe';
 
-  const mercuryBaseUrl = (env.MERCURY_BASE_URL || 'https://api.inceptionlabs.ai/v1').trim();
+  const mercuryBaseUrl = (env.Mercury || env.MERCURY_BASE_URL || 'https://api.inceptionlabs.ai/v1').trim();
   const mercuryModel = (env.MERCURY_MODEL || 'mercury-3').trim();
-  const mercuryApiKey = (env.MERCURY_API_KEY || '').trim();
+  const mercuryKeysRaw = (env.Mercury_key || env.MERCURY_KEY || env.MERCURY_API_KEY || '').trim();
+  const mercuryKeyList = mercuryKeysRaw
+    .split(',')
+    .map((k) => k.trim())
+    .filter(Boolean);
+  const mercuryApiKey = mercuryKeyList[0] || '';
 
   const builtinModels = [
     {
@@ -69,6 +81,7 @@ export function readAiEnv(env = process.env) {
       name: 'Agnes 2.5 Flash',
       endpoint: agnesBaseUrl,
       apiKey: agnesApiKey,
+      keyPool: agnesKeyList.length > 0 ? agnesKeyList : [agnesApiKey],
       provider: 'openai',
     },
     {
@@ -76,6 +89,7 @@ export function readAiEnv(env = process.env) {
       name: 'Mercury-3 (Inception Labs)',
       endpoint: mercuryBaseUrl,
       apiKey: mercuryApiKey,
+      keyPool: mercuryKeyList.length > 0 ? mercuryKeyList : [mercuryApiKey].filter(Boolean),
       provider: 'openai',
     },
   ];
