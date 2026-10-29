@@ -149,6 +149,61 @@ button {
   text-underline-offset: 2px;
 }
 
+.sl-prose hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 1.25rem 0;
+}
+
+.sl-table-container {
+  overflow-x: auto;
+  margin: 1rem 0;
+  border-radius: 4px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+}
+
+.sl-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.sl-prose th {
+  background: var(--paper-sunk);
+  color: var(--ink);
+  font-weight: 600;
+  padding: 0.625rem 0.875rem;
+  border-bottom: 1px solid var(--rule-strong);
+  border-right: 1px solid var(--rule);
+}
+
+.sl-prose th:last-child {
+  border-right: none;
+}
+
+.sl-prose td {
+  padding: 0.625rem 0.875rem;
+  border-bottom: 1px solid var(--rule);
+  border-right: 1px solid var(--rule);
+  color: var(--ink);
+  vertical-align: top;
+}
+
+.sl-prose td:last-child {
+  border-right: none;
+}
+
+.sl-prose tr:last-child td {
+  border-bottom: none;
+}
+
+.sl-prose tr:nth-child(even) td {
+  background: rgba(0, 0, 0, 0.015);
+}
+
 .sl-scroll {
   scrollbar-width: thin;
   scrollbar-color: var(--rule-strong) transparent;

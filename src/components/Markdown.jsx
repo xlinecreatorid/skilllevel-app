@@ -53,6 +53,150 @@ function renderInline(text, keyPrefix) {
   return nodes;
 }
 
+function parseTableRow(line) {
+  let content = line.trim();
+  if (content.startsWith('|')) content = content.slice(1);
+  if (content.endsWith('|')) content = content.slice(0, -1);
+  return content.split('|').map((c) => c.trim());
+}
+
+function isTableDelimiter(line) {
+  const cells = parseTableRow(line);
+  return cells.length > 0 && cells.every((c) => /^:?-+:?$/.test(c));
+}
+
+function isTableLine(line) {
+  const trimmed = line.trim();
+  return trimmed.startsWith('|') && trimmed.includes('|');
+}
+
+function groupBlockElements(lines) {
+  const elements = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const rawLine = lines[i];
+    const trimmed = rawLine.trim();
+
+    if (!trimmed) {
+      i++;
+      continue;
+    }
+
+    // Pemisah horizontal: ---, ***, ___
+    if (/^(\-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
+      elements.push({ type: 'hr' });
+      i++;
+      continue;
+    }
+
+    // Judul heading markdown (# .. ####)
+    const headingMatch = trimmed.match(/^(#{1,4})\s+(.*)$/);
+    if (headingMatch) {
+      elements.push({
+        type: 'heading',
+        level: Math.min(4, headingMatch[1].length + 2),
+        text: headingMatch[2],
+      });
+      i++;
+      continue;
+    }
+
+    // Kutipan blockquote (> ...)
+    const quoteMatch = trimmed.match(/^>\s*(.*)$/);
+    if (quoteMatch) {
+      elements.push({
+        type: 'quote',
+        text: quoteMatch[1],
+      });
+      i++;
+      continue;
+    }
+
+    // Tabel markdown (mendeteksi baris tabel dan baris pembatas)
+    if (isTableLine(trimmed)) {
+      let j = i + 1;
+      while (j < lines.length && !lines[j].trim()) {
+        j++;
+      }
+      if (j < lines.length && isTableLine(lines[j]) && isTableDelimiter(lines[j])) {
+        const headers = parseTableRow(trimmed);
+        const rows = [];
+        let k = j + 1;
+        while (k < lines.length) {
+          const nextTrimmed = lines[k].trim();
+          if (!nextTrimmed) {
+            let lookAhead = k + 1;
+            while (lookAhead < lines.length && !lines[lookAhead].trim()) {
+              lookAhead++;
+            }
+            if (lookAhead < lines.length && isTableLine(lines[lookAhead]) && !isTableDelimiter(lines[lookAhead])) {
+              k++;
+              continue;
+            } else {
+              break;
+            }
+          }
+          if (isTableLine(nextTrimmed) && !isTableDelimiter(nextTrimmed)) {
+            rows.push(parseTableRow(nextTrimmed));
+            k++;
+          } else {
+            break;
+          }
+        }
+        elements.push({
+          type: 'table',
+          headers,
+          rows,
+        });
+        i = k;
+        continue;
+      }
+    }
+
+    // Daftar bernomor atau poin bulet
+    const bullet = trimmed.match(/^[-*]\s+(.*)$/);
+    const numbered = trimmed.match(/^\d+[.)]\s+(.*)$/);
+    if (bullet || numbered) {
+      const ordered = Boolean(numbered);
+      const items = [(bullet || numbered)[1]];
+      let nextIdx = i + 1;
+      while (nextIdx < lines.length) {
+        const nextTrimmed = lines[nextIdx].trim();
+        if (!nextTrimmed) {
+          nextIdx++;
+          continue;
+        }
+        const nextItem = ordered
+          ? nextTrimmed.match(/^\d+[.)]\s+(.*)$/)
+          : nextTrimmed.match(/^[-*]\s+(.*)$/);
+        if (nextItem) {
+          items.push(nextItem[1]);
+          nextIdx++;
+        } else {
+          break;
+        }
+      }
+      elements.push({
+        type: 'list',
+        ordered,
+        items,
+      });
+      i = nextIdx;
+      continue;
+    }
+
+    // Paragraf teks biasa
+    elements.push({
+      type: 'paragraph',
+      text: trimmed,
+    });
+    i++;
+  }
+
+  return elements;
+}
+
 export function Markdown({ text = '' }) {
   if (!text) return null;
 
@@ -79,61 +223,81 @@ export function Markdown({ text = '' }) {
         }
 
         const lines = block.split('\n');
-        const out = [];
-        let list = null;
+        const elements = groupBlockElements(lines);
 
-        const flushList = () => {
-          if (!list) return;
-          const Tag = list.ordered ? 'ol' : 'ul';
-          out.push(
-            <Tag key={`list-${out.length}`}>
-              {list.items.map((item, i) => (
-                <li key={i}>{renderInline(item, `li-${blockIndex}-${out.length}-${i}`)}</li>
-              ))}
-            </Tag>
-          );
-          list = null;
-        };
+        return (
+          <Fragment key={`block-${blockIndex}`}>
+            {elements.map((el, elIndex) => {
+              const elKey = `el-${blockIndex}-${elIndex}`;
 
-        lines.forEach((line, lineIndex) => {
-          const trimmed = line.trim();
-          const bullet = trimmed.match(/^[-*]\s+(.*)$/);
-          const numbered = trimmed.match(/^\d+[.)]\s+(.*)$/);
+              if (el.type === 'hr') {
+                return <hr key={elKey} />;
+              }
 
-          if (bullet || numbered) {
-            const ordered = Boolean(numbered);
-            if (!list || list.ordered !== ordered) {
-              flushList();
-              list = { ordered, items: [] };
-            }
-            list.items.push((bullet || numbered)[1]);
-            return;
-          }
+              if (el.type === 'heading') {
+                const Tag = `h${el.level}`;
+                return (
+                  <Tag key={elKey} className="mt-4 mb-1 text-[1.0625rem] text-[var(--ink)]">
+                    {renderInline(el.text, `${elKey}-h`)}
+                  </Tag>
+                );
+              }
 
-          flushList();
-          if (!trimmed) return;
+              if (el.type === 'quote') {
+                return (
+                  <blockquote
+                    key={elKey}
+                    className="border-l-2 border-[var(--accent)] pl-3 my-2 text-[var(--ink-soft)] italic"
+                  >
+                    {renderInline(el.text, `${elKey}-q`)}
+                  </blockquote>
+                );
+              }
 
-          const heading = trimmed.match(/^(#{1,4})\s+(.*)$/);
-          if (heading) {
-            const level = Math.min(4, heading[1].length + 2);
-            const Tag = `h${level}`;
-            out.push(
-              <Tag key={`h-${blockIndex}-${lineIndex}`} className="mt-4 mb-1 text-[1.0625rem] text-[var(--ink)]">
-                {renderInline(heading[2], `h-${blockIndex}-${lineIndex}`)}
-              </Tag>
-            );
-            return;
-          }
+              if (el.type === 'table') {
+                return (
+                  <div key={elKey} className="sl-table-container">
+                    <table>
+                      <thead>
+                        <tr>
+                          {el.headers.map((h, i) => (
+                            <th key={i}>{renderInline(h, `${elKey}-th-${i}`)}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {el.rows.map((row, rIdx) => (
+                          <tr key={rIdx}>
+                            {row.map((cell, cIdx) => (
+                              <td key={cIdx}>{renderInline(cell, `${elKey}-td-${rIdx}-${cIdx}`)}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              }
 
-          out.push(
-            <p key={`p-${blockIndex}-${lineIndex}`} className="my-1.5">
-              {renderInline(trimmed, `p-${blockIndex}-${lineIndex}`)}
-            </p>
-          );
-        });
+              if (el.type === 'list') {
+                const Tag = el.ordered ? 'ol' : 'ul';
+                return (
+                  <Tag key={elKey}>
+                    {el.items.map((item, i) => (
+                      <li key={i}>{renderInline(item, `${elKey}-li-${i}`)}</li>
+                    ))}
+                  </Tag>
+                );
+              }
 
-        flushList();
-        return <Fragment key={`block-${blockIndex}`}>{out}</Fragment>;
+              return (
+                <p key={elKey} className="my-1.5">
+                  {renderInline(el.text, `${elKey}-p`)}
+                </p>
+              );
+            })}
+          </Fragment>
+        );
       })}
     </div>
   );
