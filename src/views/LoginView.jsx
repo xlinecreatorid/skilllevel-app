@@ -1,16 +1,25 @@
 import { useState } from 'react';
-import { Button, Notice } from '../components/ui.jsx';
-import { signInWithGoogle } from '../lib/supabaseClient.js';
+import { Button, Field, Notice, inputClass } from '../components/ui.jsx';
+import {
+  signInWithGoogle,
+  signInWithEmail,
+  signUpWithEmail,
+  signInWithQuickAccess,
+} from '../lib/supabaseClient.js';
 import { useI18n } from '../lib/i18n.jsx';
 
 export function LoginView({ onAuthSuccess }) {
   const { lang, setLang, t } = useI18n();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
 
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError('');
+    setInfo('');
     try {
       const res = await signInWithGoogle();
       if (res?.error) throw res.error;
@@ -18,7 +27,66 @@ export function LoginView({ onAuthSuccess }) {
         onAuthSuccess?.(res.data.user);
       }
     } catch (err) {
-      setError(err?.message || 'Gagal masuk dengan Google.');
+      setError(
+        err?.message ||
+          'Google OAuth belum diaktifkan di Supabase. Gunakan Masuk dengan Email di bawah ini.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setInfo('');
+    try {
+      const res = await signInWithEmail(email, password);
+      if (res?.error) throw res.error;
+      if (res?.data?.user) {
+        onAuthSuccess?.(res.data.user);
+      }
+    } catch (err) {
+      setError(err?.message || 'Gagal masuk dengan email.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignUp = async () => {
+    setLoading(true);
+    setError('');
+    setInfo('');
+    try {
+      const res = await signUpWithEmail(email, password);
+      if (res?.error) throw res.error;
+      if (res?.data?.user) {
+        setInfo(
+          lang === 'id'
+            ? 'Akun berhasil didaftarkan. Anda dapat langsung masuk sekarang.'
+            : 'Account registered successfully. You can now sign in.'
+        );
+      }
+    } catch (err) {
+      setError(err?.message || 'Gagal mendaftar akun baru.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuickLogin = async () => {
+    setLoading(true);
+    setError('');
+    setInfo('');
+    try {
+      const res = await signInWithQuickAccess();
+      if (res?.error) throw res.error;
+      if (res?.data?.user) {
+        onAuthSuccess?.(res.data.user);
+      }
+    } catch (err) {
+      setError(err?.message || 'Gagal masuk akun pengujian.');
     } finally {
       setLoading(false);
     }
@@ -69,7 +137,7 @@ export function LoginView({ onAuthSuccess }) {
       </header>
 
       {/* Konten Utama: Gerbang Login */}
-      <main className="flex flex-1 items-center justify-center px-4 py-12 sm:py-20">
+      <main className="flex flex-1 items-center justify-center px-4 py-8 sm:py-16">
         <div className="w-full max-w-lg border border-[var(--rule-strong)] bg-[var(--paper-raised)] p-6 shadow-[0_20px_50px_-20px_rgba(27,26,23,0.35)] sm:p-9">
           {/* Eyebrow & Judul */}
           <div className="mb-6">
@@ -78,7 +146,7 @@ export function LoginView({ onAuthSuccess }) {
                 {t('login_gate_eyebrow')}
               </span>
               <span className="font-mono text-[0.6875rem] uppercase text-[var(--ink-faint)]">
-                OAuth 2.0
+                Supabase Auth
               </span>
             </div>
             <h1 className="mt-1 font-serif text-[1.625rem] leading-tight text-[var(--ink)]">
@@ -89,21 +157,21 @@ export function LoginView({ onAuthSuccess }) {
             </p>
           </div>
 
-          {/* Pesan Kesalahan */}
+          {/* Notifikasi Informasi / Kesalahan */}
           {error ? (
             <div className="mb-5">
               <Notice tone="danger">{error}</Notice>
             </div>
           ) : null}
 
-          {/* Form Masuk Google */}
-          <div className="space-y-4">
-            <p className="text-[0.875rem] leading-relaxed text-[var(--ink-soft)]">
-              {lang === 'id'
-                ? 'Gunakan akun Google Anda untuk masuk secara instan. Data sesi dan riwayat belajar disimpan terenkripsi.'
-                : 'Sign in instantly with your Google account. Session and learning history are encrypted end-to-end.'}
-            </p>
+          {info ? (
+            <div className="mb-5">
+              <Notice tone="ok">{info}</Notice>
+            </div>
+          ) : null}
 
+          {/* Opsi 1: Google OAuth */}
+          <div className="space-y-4">
             <Button
               variant="primary"
               size="lg"
@@ -133,8 +201,83 @@ export function LoginView({ onAuthSuccess }) {
             </Button>
           </div>
 
+          {/* Divider Pemisah */}
+          <div className="relative my-6 text-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-[var(--rule)]" />
+            </div>
+            <span className="relative bg-[var(--paper-raised)] px-3 text-[0.75rem] uppercase tracking-wider text-[var(--ink-faint)]">
+              {t('auth_or_divider')}
+            </span>
+          </div>
+
+          {/* Opsi 2: Email & Kata Sandi Form */}
+          <form onSubmit={handleEmailLogin} className="space-y-4">
+            <Field label={t('auth_email_label')} htmlFor="login-email-input">
+              <input
+                id="login-email-input"
+                type="email"
+                className={inputClass}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="nama@email.com"
+                autoComplete="email"
+                disabled={loading}
+              />
+            </Field>
+
+            <Field label={t('auth_pass_label')} htmlFor="login-pass-input">
+              <input
+                id="login-pass-input"
+                type="password"
+                className={inputClass}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                disabled={loading}
+              />
+            </Field>
+
+            <div className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
+              <Button
+                type="submit"
+                variant="primary"
+                size="md"
+                className="w-full justify-center"
+                disabled={loading || !email.trim() || !password.trim()}
+              >
+                {t('auth_email_btn')}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                className="w-full justify-center"
+                onClick={handleSignUp}
+                disabled={loading || !email.trim() || !password.trim()}
+              >
+                {t('auth_signup_btn')}
+              </Button>
+            </div>
+          </form>
+
+          {/* Tombol Akses Cepat / Akun Pengujian */}
+          <div className="mt-5 border-t border-dashed border-[var(--rule)] pt-4 text-center">
+            <button
+              type="button"
+              onClick={handleQuickLogin}
+              disabled={loading}
+              className="text-[0.8125rem] font-semibold text-[var(--accent)] underline decoration-[var(--rule-strong)] underline-offset-4 hover:text-[var(--accent-ink)]"
+            >
+              {lang === 'id'
+                ? '⚡ Masuk Instan (Akun Uji Supabase: skilllevel.user.test@gmail.com)'
+                : '⚡ Instant Sign In (Supabase Test Account)'}
+            </button>
+          </div>
+
           {/* Catatan Keamanan */}
-          <div className="mt-8 border-t border-[var(--rule)] pt-4 text-center">
+          <div className="mt-6 border-t border-[var(--rule)] pt-4 text-center">
             <p className="text-[0.75rem] leading-relaxed text-[var(--ink-faint)]">
               {t('login_gate_security')}
             </p>

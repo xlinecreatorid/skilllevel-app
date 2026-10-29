@@ -19,15 +19,34 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 export async function signInWithGoogle() {
   if (!isSupabaseConfigured) {
-    // Mode simulasi/demo lokal bila kredensial Supabase belum diisi
     const mockUser = {
       id: `usr_${Date.now()}`,
-      email: 'mahasiswa@kampus.ac.id',
-      user_metadata: { full_name: 'Mahasiswa Web', avatar_url: '' },
+      email: 'pelajar@kampus.ac.id',
+      user_metadata: { full_name: 'Pelajar Web', avatar_url: '' },
       role: 'student',
     };
     localStorage.setItem('sl_auth_mock_user', JSON.stringify(mockUser));
     return { data: { user: mockUser }, error: null };
+  }
+
+  // Pre-flight check apakah Google OAuth sudah diaktifkan di Supabase
+  try {
+    const checkRes = await fetch(`${supabaseUrl}/auth/v1/authorize?provider=google`, {
+      method: 'GET',
+    });
+    if (!checkRes.ok) {
+      const errJson = await checkRes.json().catch(() => null);
+      if (errJson?.error_code === 'validation_failed' || errJson?.msg?.includes('not enabled')) {
+        return {
+          data: null,
+          error: new Error(
+            'Google OAuth belum diaktifkan di Supabase Dashboard (Authentication -> Providers -> Google). Silakan gunakan Masuk dengan Email di bawah ini.'
+          ),
+        };
+      }
+    }
+  } catch {
+    /* lanjutkan bila terkendala CORS preflight */
   }
 
   return await supabase.auth.signInWithOAuth({
@@ -36,6 +55,58 @@ export async function signInWithGoogle() {
       redirectTo: window.location.origin,
     },
   });
+}
+
+export async function signInWithEmail(email, password) {
+  const cleanEmail = String(email || '').trim();
+  const cleanPassword = String(password || '').trim();
+
+  if (!cleanEmail || !cleanPassword) {
+    return { data: null, error: new Error('Email dan kata sandi wajib diisi.') };
+  }
+
+  if (!isSupabaseConfigured) {
+    const mockUser = {
+      id: `usr_${Date.now()}`,
+      email: cleanEmail,
+      user_metadata: { full_name: cleanEmail.split('@')[0] },
+      role: 'student',
+    };
+    localStorage.setItem('sl_auth_mock_user', JSON.stringify(mockUser));
+    return { data: { user: mockUser }, error: null };
+  }
+
+  return await supabase.auth.signInWithPassword({
+    email: cleanEmail,
+    password: cleanPassword,
+  });
+}
+
+export async function signUpWithEmail(email, password, fullName = '') {
+  const cleanEmail = String(email || '').trim();
+  const cleanPassword = String(password || '').trim();
+
+  if (!cleanEmail || !cleanPassword) {
+    return { data: null, error: new Error('Email dan kata sandi wajib diisi.') };
+  }
+
+  if (!isSupabaseConfigured) {
+    return signInWithEmail(cleanEmail, cleanPassword);
+  }
+
+  return await supabase.auth.signUp({
+    email: cleanEmail,
+    password: cleanPassword,
+    options: {
+      data: {
+        full_name: fullName.trim() || cleanEmail.split('@')[0],
+      },
+    },
+  });
+}
+
+export async function signInWithQuickAccess() {
+  return await signInWithEmail('skilllevel.user.test@gmail.com', 'user123');
 }
 
 export async function signOut() {
@@ -74,88 +145,89 @@ export function subscribeAuthChanges(callback) {
   const raw = localStorage.getItem('sl_auth_mock_user');
   if (raw) {
     try {
-      callback(JSON.parse(raw));
+      const user = JSON.parse(raw);
+      if (user) {
+        callback?.(user);
+      }
     } catch {
       /* abaikan */
     }
   }
 
-  const handler = () => {
-    const u = localStorage.getItem('sl_auth_mock_user');
-    if (u) {
+  if (!isSupabaseConfigured) {
+    return { unsubscribe: () => {} };
+  }
+
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((_event, session) => {
+    const currentMock = localStorage.getItem('sl_auth_mock_user');
+    if (currentMock) {
       try {
-        callback(JSON.parse(u));
-        return;
+        const u = JSON.parse(currentMock);
+        if (u) return callback?.(u);
       } catch {
         /* abaikan */
       }
     }
-    if (!isSupabaseConfigured) {
-      callback(null);
-    }
-  };
-  window.addEventListener('storage', handler);
+    callback?.(session?.user || null);
+  });
 
-  let unsubscribeSupabase = () => {};
-  if (isSupabaseConfigured) {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      const currentMock = localStorage.getItem('sl_auth_mock_user');
-      if (currentMock) return;
-      callback(session?.user || null);
-    });
-    unsubscribeSupabase = () => subscription.unsubscribe();
-  }
-
-  return () => {
-    window.removeEventListener('storage', handler);
-    unsubscribeSupabase();
-  };
+  return subscription;
 }
 
-/** Simpan progres terenkripsi end-to-end ke database Supabase */
-export async function syncProgressToCloud(userId, progress) {
-  if (!userId || !progress) return;
+export async function saveUserProgressEncrypted(userId, plainState) {
+  if (!userId) return false;
   try {
-    const plainJson = JSON.stringify(progress);
-    const encryptedPayload = await encryptData(plainJson);
+    const ciphertext = await encryptData(plainState);
+    if (!ciphertext) return false;
+
+    localStorage.setItem(`sl_progress_${userId}`, ciphertext);
 
     if (isSupabaseConfigured) {
-      await supabase.from('user_progress').upsert({
-        user_id: userId,
-        encrypted_data: encryptedPayload,
-        updated_at: new Date().toISOString(),
-      });
-    } else {
-      localStorage.setItem(`sl_cloud_backup_${userId}`, encryptedPayload);
+      const { error } = await supabase.from('user_progress').upsert(
+        {
+          user_id: userId,
+          encrypted_data: ciphertext,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' }
+      );
+      if (error) {
+        console.warn('Gagal sinkronisasi Supabase:', error.message);
+      }
     }
+    return true;
   } catch (err) {
-    console.warn('[sync] Gagal menyinkronkan progres ke cloud:', err);
+    console.error('Gagal enkripsi progres:', err);
+    return false;
   }
 }
 
-/** Muat progres terenkripsi dari database Supabase dan dekripsi di sisi klien */
-export async function loadProgressFromCloud(userId) {
+export const syncProgressToCloud = saveUserProgressEncrypted;
+export const loadProgressFromCloud = loadUserProgressDecrypted;
+
+export async function loadUserProgressDecrypted(userId) {
   if (!userId) return null;
   try {
-    let encryptedPayload = null;
+    let ciphertext = localStorage.getItem(`sl_progress_${userId}`);
+
     if (isSupabaseConfigured) {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('user_progress')
         .select('encrypted_data')
         .eq('user_id', userId)
-        .single();
-      encryptedPayload = data?.encrypted_data;
-    } else {
-      encryptedPayload = localStorage.getItem(`sl_cloud_backup_${userId}`);
+        .maybeSingle();
+
+      if (!error && data?.encrypted_data) {
+        ciphertext = data.encrypted_data;
+      }
     }
 
-    if (!encryptedPayload) return null;
-    const decryptedJson = await decryptData(encryptedPayload);
-    return JSON.parse(decryptedJson);
+    if (!ciphertext) return null;
+    return await decryptData(ciphertext);
   } catch (err) {
-    console.warn('[sync] Gagal mendekripsi progres dari cloud:', err);
+    console.error('Gagal dekripsi progres:', err);
     return null;
   }
 }
