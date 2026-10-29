@@ -12,7 +12,7 @@ export const DICTIONARY = {
     nav_upload: 'Unggah',
     nav_progress: 'Progres',
     skip_to_content: 'Lompat ke konten',
-    app_subtitle: 'Jalur Web Fullstack',
+    app_subtitle: '',
     footer_note: 'Progres belajar tersimpan aman secara end-to-end.',
 
     // Tombol & Aksi Umum
@@ -32,9 +32,9 @@ export const DICTIONARY = {
     btn_search: 'Cari',
 
     // Dashboard
-    dash_eyebrow: 'Jalur Web Fullstack Terstruktur',
-    dash_title: 'Sembilan modul terpadu untuk penguasaan web modern.',
-    dash_desc: 'Pelajari konsep fundamental dari dasar peramban hingga arsitektur backend aman dan integrasi AI.',
+    dash_eyebrow: '',
+    dash_title: 'Belajar cara kerja web dari browser sampai server.',
+    dash_desc: 'Materi berurutan dengan contoh nyata, latihan kuis per modul, dan tanya jawab tutor teknis.',
     dash_continue: 'Lanjut ke Modul {order}: {title}',
     dash_repeat_quiz: 'Semua modul selesai, ulangi kuis evaluasi',
     dash_ask_tutor: 'Tanya Tutor AI',
@@ -46,7 +46,7 @@ export const DICTIONARY = {
     dash_quiz_avg: 'Rata-rata Kuis',
     dash_curriculum_map: 'Peta Kurikulum',
     dash_nine_modules: 'Modul Pembelajaran Terstruktur',
-    dash_nine_modules_desc: 'Disusun sistematis dari arsitektur browser hingga keamanan aplikasi tingkat lanjut.',
+    dash_nine_modules_desc: 'Mulai dari parsing dokumen dan tata letak peramban hingga basis data dan keamanan web.',
     dash_add_custom: 'Tambah modul dari berkas',
 
     // Modul
@@ -186,7 +186,7 @@ export const DICTIONARY = {
     nav_upload: 'Upload',
     nav_progress: 'Progress',
     skip_to_content: 'Skip to content',
-    app_subtitle: 'Fullstack Web Track',
+    app_subtitle: '',
     footer_note: 'Learning progress stored securely with end-to-end encryption.',
 
     // Common Buttons & Actions
@@ -206,9 +206,9 @@ export const DICTIONARY = {
     btn_search: 'Search',
 
     // Dashboard
-    dash_eyebrow: 'Structured Fullstack Web Track',
-    dash_title: 'Nine integrated modules for mastering modern web engineering.',
-    dash_desc: 'Learn fundamental concepts from browser rendering to secure backend architecture and AI integration.',
+    dash_eyebrow: '',
+    dash_title: 'Learn how the web works from browser to server.',
+    dash_desc: 'Step-by-step lessons with practical code examples, quizzes for every module, and on-demand tutor guidance.',
     dash_continue: 'Continue to Module {order}: {title}',
     dash_repeat_quiz: 'All modules completed, repeat evaluation quiz',
     dash_ask_tutor: 'Ask AI Tutor',
@@ -220,7 +220,7 @@ export const DICTIONARY = {
     dash_quiz_avg: 'Quiz Average',
     dash_curriculum_map: 'Curriculum Roadmap',
     dash_nine_modules: 'Structured Learning Modules',
-    dash_nine_modules_desc: 'Sequentially organized from browser internals to enterprise application security.',
+    dash_nine_modules_desc: 'From document parsing and browser layout to databases and web security.',
     dash_add_custom: 'Add module from file',
 
     // Modules

@@ -35,9 +35,11 @@ export function Shell({
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-8">
           <div className="flex items-baseline gap-3">
             <span className="font-serif text-[1.375rem] leading-none tracking-tight text-[var(--ink)]">Skilllevel</span>
-            <span className="hidden text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-[var(--ink-faint)] sm:inline">
-              {t('app_subtitle')}
-            </span>
+            {t('app_subtitle') ? (
+              <span className="hidden text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-[var(--ink-faint)] sm:inline">
+                {t('app_subtitle')}
+              </span>
+            ) : null}
           </div>
 
           <div className="flex items-center gap-3">

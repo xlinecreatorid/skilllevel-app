@@ -2,7 +2,7 @@
 // Semua materi di sini bisa dipakai tanpa API key, jadi aplikasi tetap berfungsi offline.
 
 export const CURRICULUM_TRACK = {
-  title: 'Jalur Web Fullstack Dasar',
+  title: 'Rekayasa Web',
   description:
     'Sembilan modul berurutan dari cara browser bekerja sampai keamanan aplikasi. Setiap modul punya langkah, contoh, dan kuis 10 soal.',
 };

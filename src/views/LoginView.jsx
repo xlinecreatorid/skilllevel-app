@@ -93,9 +93,11 @@ export function LoginView({ onAuthSuccess }) {
             <span className="font-serif text-[1.375rem] leading-none tracking-tight text-[var(--ink)]">
               Skilllevel
             </span>
-            <span className="hidden text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-[var(--ink-faint)] sm:inline">
-              {t('app_subtitle')}
-            </span>
+            {t('app_subtitle') ? (
+              <span className="hidden text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-[var(--ink-faint)] sm:inline">
+                {t('app_subtitle')}
+              </span>
+            ) : null}
           </div>
 
           {/* Toggle Bahasa ID / EN */}

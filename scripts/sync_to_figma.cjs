@@ -40,7 +40,6 @@ function generateAuthLoginSvg() {
   <rect width="1440" height="64" fill="#fcfaf5"/>
   <line x1="0" y1="64" x2="1440" y2="64" stroke="#e3ded1" stroke-width="1"/>
   <text x="80" y="38" font-family="Georgia, serif" font-size="20" font-weight="bold" fill="#1b1a17">Skilllevel</text>
-  <text x="175" y="38" font-family="sans-serif" font-size="11" font-weight="600" letter-spacing="1.5" fill="#8c8577">JALUR WEB FULLSTACK</text>
   
   <rect x="1310" y="20" width="50" height="26" fill="#f5f0e6" stroke="#c8c2b5" rx="2"/>
   <rect x="1310" y="20" width="25" height="26" fill="#294868" rx="2"/>
@@ -86,7 +85,6 @@ function generateAuthRegisterSvg() {
   <rect width="1440" height="64" fill="#fcfaf5"/>
   <line x1="0" y1="64" x2="1440" y2="64" stroke="#e3ded1" stroke-width="1"/>
   <text x="80" y="38" font-family="Georgia, serif" font-size="20" font-weight="bold" fill="#1b1a17">Skilllevel</text>
-  <text x="175" y="38" font-family="sans-serif" font-size="11" font-weight="600" letter-spacing="1.5" fill="#8c8577">JALUR WEB FULLSTACK</text>
 
   <g transform="translate(480, 110)">
     <rect width="480" height="680" fill="#fcfaf5" stroke="#c8c2b5" stroke-width="1" rx="4"/>
@@ -141,8 +139,6 @@ function generateDashboardSvg() {
   <line x1="0" y1="68" x2="1440" y2="68" stroke="#e3ded1" stroke-width="1"/>
   
   <text x="80" y="42" font-family="Georgia, serif" font-size="22" font-weight="bold" fill="#1b1a17">Skilllevel</text>
-  <rect x="180" y="27" width="165" height="22" fill="#e8f0fe" rx="3"/>
-  <text x="188" y="42" font-family="sans-serif" font-size="10" font-weight="700" letter-spacing="1.2" fill="#294868">JALUR WEB FULLSTACK</text>
 
   <text x="440" y="42" font-family="sans-serif" font-size="14" font-weight="700" fill="#294868">Dasbor Belajar</text>
   <line x1="440" y1="48" x2="538" y2="48" stroke="#294868" stroke-width="2"/>
@@ -161,7 +157,7 @@ function generateDashboardSvg() {
   <g transform="translate(80, 96)">
     <rect width="1280" height="110" fill="#fcfaf5" stroke="#c8c2b5" rx="4"/>
     <text x="32" y="42" font-family="Georgia, serif" font-size="24" font-weight="bold" fill="#1b1a17">Selamat Datang Kembali, Siswa Belajar</text>
-    <text x="32" y="68" font-family="sans-serif" font-size="13" fill="#5e5a52">Lanjutkan perjalanan kurikulum web fullstack terstruktur. 4 dari 9 modul telah tuntas dievaluasi.</text>
+    <text x="32" y="68" font-family="sans-serif" font-size="13" fill="#5e5a52">Lanjutkan pembelajaran modul web. 4 dari 9 modul telah tuntas dievaluasi.</text>
 
     <g transform="translate(880, 25)">
       <text x="0" y="20" font-family="sans-serif" font-size="11" font-weight="bold" letter-spacing="1" fill="#8c8577">STATUS KEMAJUAN</text>
@@ -214,11 +210,9 @@ function generateCurriculumSvg() {
   <line x1="0" y1="68" x2="1440" y2="68" stroke="#e3ded1" stroke-width="1"/>
   
   <text x="80" y="42" font-family="Georgia, serif" font-size="22" font-weight="bold" fill="#1b1a17">Skilllevel</text>
-  <rect x="180" y="27" width="165" height="22" fill="#e8f0fe" rx="3"/>
-  <text x="188" y="42" font-family="sans-serif" font-size="10" font-weight="700" letter-spacing="1.2" fill="#294868">JALUR WEB FULLSTACK</text>
 
   <g transform="translate(80, 95)">
-    <text x="0" y="30" font-family="Georgia, serif" font-size="28" font-weight="bold" fill="#1b1a17">Katalog Kurikulum Web Fullstack</text>
+    <text x="0" y="30" font-family="Georgia, serif" font-size="28" font-weight="bold" fill="#1b1a17">Katalog Modul Belajar</text>
     <text x="0" y="56" font-family="sans-serif" font-size="14" fill="#5e5a52">9 modul pembelajaran dari fondasi markup hingga deployment dan arsitektur database modern.</text>
 
     <!-- Grid 9 Modul -->

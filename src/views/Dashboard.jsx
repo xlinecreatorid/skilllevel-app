@@ -24,8 +24,10 @@ export function Dashboard({ materials, progress, level, onOpenModule, onStartQui
     <div className="space-y-10">
       <section className="grid gap-8 lg:grid-cols-[1.35fr_1fr] lg:items-start">
         <div>
-          <Eyebrow>{t('dash_eyebrow')}</Eyebrow>
-          <h1 className="mt-3 text-[2.25rem] leading-[1.1] text-[var(--ink)] sm:text-[3rem]">
+          {t('dash_eyebrow') ? <Eyebrow>{t('dash_eyebrow')}</Eyebrow> : null}
+          <h1
+            className={`${t('dash_eyebrow') ? 'mt-3 ' : ''}text-[2.25rem] leading-[1.1] text-[var(--ink)] sm:text-[3rem]`}
+          >
             {t('dash_title')}
           </h1>
           <p className="mt-4 max-w-xl text-[1.0625rem] leading-relaxed text-[var(--ink-soft)]">
