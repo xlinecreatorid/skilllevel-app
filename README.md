@@ -85,4 +85,3 @@ Each module includes conceptual material, real-world code examples, an interacti
 | `npm start` | Runs the integrated Node.js production server (port 3000) |
 | `npm run lint` | Checks the syntax validity of all 13 main JavaScript files |
 | `npm test` | Runs 45 automated unit and security tests (`node --test`) |
-| `npm run figma:sync` | Generates 8 1440x900 desktop vector artboards from the project code to the `design_exports/` folder|

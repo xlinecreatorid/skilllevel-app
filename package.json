@@ -9,8 +9,7 @@
     "start": "node server/index.js",
     "lint": "node scripts/lint.js",
     "test": "node scripts/run_tests.js",
-    "preview": "vite preview",
-    "figma:sync": "node scripts/sync_to_figma.cjs"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
