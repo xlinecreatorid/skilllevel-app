@@ -23,6 +23,10 @@ export default defineConfig(({ command }) => ({
       },
     },
   ].filter(Boolean),
-  server: { port: 5173 },
+  server: {
+    port: process.env.FIGMA ? Number(process.env.PORT) : 5173,
+    host: process.env.FIGMA ? (process.env.FIGMA_DEV_SERVER_HOST || '0.0.0.0') : undefined,
+    strictPort: Boolean(process.env.FIGMA),
+  },
   build: { outDir: 'dist', sourcemap: false },
 }));
