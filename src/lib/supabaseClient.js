@@ -61,7 +61,7 @@ export async function registerUser({ fullName, username, password }) {
 
   const passwordHash = await hashPassword(cleanPassword, cleanUsername);
 
-  // 1. Cek duplikasi di Supabase jika terhubung
+  // Verifikasi duplikasi akun di Supabase bila terhubung.
   if (isSupabaseConfigured) {
     try {
       const { data: existing } = await supabase
@@ -109,7 +109,7 @@ export async function registerUser({ fullName, username, password }) {
     }
   }
 
-  // 2. Fallback penyimpanan lokal
+  // Fallback ke penyimpanan akun lokal.
   const localUsers = getLocalUsers();
   if (localUsers[cleanUsername]) {
     return { data: null, error: new Error('Nama pengguna sudah terdaftar di sistem lokal.') };
@@ -138,7 +138,7 @@ export async function loginUser({ username, password }) {
 
   const expectedHash = await hashPassword(cleanPassword, cleanUsername);
 
-  // 1. Cek di database Supabase jika terhubung
+  // Verifikasi kredensial di Supabase bila terhubung.
   if (isSupabaseConfigured) {
     try {
       const { data: found, error } = await supabase
@@ -167,7 +167,7 @@ export async function loginUser({ username, password }) {
     }
   }
 
-  // 2. Cek di penyimpanan lokal jika offline atau Supabase belum ada
+  // Verifikasi kredensial di penyimpanan lokal saat offline.
   const localUsers = getLocalUsers();
   const localUser = localUsers[cleanUsername];
   if (localUser) {

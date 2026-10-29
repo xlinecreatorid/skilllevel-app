@@ -17,7 +17,7 @@ export const FULL_CONTEXT_LIMIT = 30000; // karakter; di bawah ini seluruh modul
 export const RETRIEVAL_BUDGET = 14000; // karakter konteks bila modul sangat panjang
 const MAX_HISTORY_MESSAGES = 8;
 
-// ---------- Tokenisasi ----------
+// Tokenisasi dan normalisasi string teks.
 const stem = (t) => (t.length > 5 ? t.replace(/(nya|kah|lah|pun)$/, '') : t);
 
 export function tokenize(str = '') {
@@ -32,7 +32,7 @@ export function tokenize(str = '') {
 
 const unique = (arr) => [...new Set(arr)];
 
-// ---------- Chunking ----------
+// Pembagian dokumen menjadi segmen teks kecil.
 function splitLong(str, size) {
   if (str.length <= size) return [str];
   const sentences = str.split(/(?<=[.!?;])\s+/);
@@ -132,7 +132,7 @@ export function buildChunks(material) {
   return all.map((c, i) => ({ ...c, id: i }));
 }
 
-// ---------- Ranking (BM25 ringan) ----------
+// Pembobotan relevansi segmen teks menggunakan BM25 ringan.
 export function rankChunks(query, chunks) {
   const qTokens = unique(tokenize(query));
   if (!qTokens.length || !chunks.length) return chunks.map((chunk) => ({ chunk, score: 0 }));
@@ -185,7 +185,7 @@ export function keywordCoverage(query, chunks) {
   return hit.length / q.length;
 }
 
-// ---------- Konteks untuk prompt ----------
+// Penyusunan kueri temu-kembali dan konteks prompt.
 export function buildRetrievalQuery(question, history = []) {
   const qTokens = tokenize(question);
   const isFollowUp = qTokens.length <= 3 || FOLLOW_UP_HINT.test(question);
@@ -288,7 +288,7 @@ export function buildChatMessages(history, question) {
   return turns;
 }
 
-// ---------- Jawaban offline (tanpa AI) berbasis kutipan modul ----------
+// Jawaban cadangan berbasis kutipan modul saat offline.
 export function buildLocalAnswer(question, material, ctx, reason = '') {
   const head = reason ? `${reason}\nBerikut kutipan modul yang paling relevan:\n\n` : '';
   if (!material) {
@@ -313,7 +313,7 @@ export function buildLocalAnswer(question, material, ctx, reason = '') {
   return `${head}${body}`;
 }
 
-// ---------- Saran pertanyaan ----------
+// Generator saran pertanyaan konteks modul.
 export function buildSuggestions(material) {
   if (!material) {
     return [

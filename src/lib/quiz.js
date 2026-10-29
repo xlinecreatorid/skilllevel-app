@@ -24,7 +24,7 @@ export function shuffle(arr, rnd = Math.random) {
   return a;
 }
 
-// ---------- Konteks modul untuk prompt ----------
+// Ekstraksi konteks modul untuk prompt kuis.
 export function buildModuleContext(material) {
   const m = material || {};
   const parts = [];
@@ -73,7 +73,7 @@ ${buildModuleContext(material)}
   };
 }
 
-// ---------- Validasi hasil AI ----------
+// Validasi dan normalisasi jawaban kuis dari AI.
 function resolveCorrectIndex(q, options) {
   let c = q.correctIndex ?? q.correct_index ?? q.answerIndex ?? q.correct ?? q.answer ?? q.correctAnswer;
   if (typeof c === 'number' && Number.isInteger(c)) return c;
@@ -125,7 +125,7 @@ export function parseQuizResponse(text) {
   return sanitizeQuestions(parseJsonLoose(text));
 }
 
-// ---------- Generator lokal dari isi modul ----------
+// Generator bank soal lokal berbasis konten materi.
 const stepName = (s) => String(s || '').replace(/^\s*(langkah|tahap|bagian|step)\s*\d+\s*[:.\-)]?\s*/i, '').trim();
 const firstSentences = (s, n = 2) => String(s).trim().split(/(?<=[.!?])\s+/).slice(0, n).join(' ').trim();
 

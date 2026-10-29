@@ -7,11 +7,9 @@ export function LoginView({ onAuthSuccess }) {
   const { lang, setLang, t } = useI18n();
   const [mode, setMode] = useState('login'); // 'login' | 'register'
 
-  // State Form Login
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
 
-  // State Form Registrasi
   const [regFullName, setRegFullName] = useState('');
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState('');
