@@ -1,16 +1,6 @@
 # Skilllevel
 
-Aplikasi belajar web fullstack berbahasa Indonesia: sembilan modul berurutan, kuis per modul, tutor AI yang membaca modul, dan modul tambahan dari berkas sendiri.
-
-## Yang berubah dari versi sebelumnya
-
-| Sebelum | Sesudah |
-| --- | --- |
-| Kunci API Gemini disimpan di `localStorage` dan dipanggil langsung dari browser | Kunci hanya ada di `.env` server. Browser memanggil `/api/ai/*` |
-| Endpoint dan model tertanam di kode | Endpoint, model, streaming, dan mode berpikir bisa diatur lewat `.env` atau dialog Pengaturan AI |
-| Satu modul contoh | Sembilan modul dengan 90 soal kuis |
-| PDF.js dimuat dari CDN | `pdfjs-dist` dipasang sebagai dependensi dan dimuat dinamis |
-| Satu komponen 1.929 baris | `App.jsx` sebagai perakit, tujuh view terpisah, primitif UI bersama |
+Aplikasi belajar web fullstack berbahasa Indonesia: kuis per modul, tutor AI yang membaca modul, dan modul tambahan dari berkas sendiri.
 
 ## Menjalankan
 
