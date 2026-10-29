@@ -1,113 +1,160 @@
 # Skilllevel
 
-Aplikasi belajar web fullstack berbahasa Indonesia: kuis per modul, tutor AI yang membaca modul, dan modul tambahan dari berkas sendiri.
+Platform pembelajaran web fullstack berbahasa Indonesia: 9 modul kurikulum terstruktur, evaluasi kuis adaptif, Tutor AI kontekstual tanpa kebocoran data, autentikasi mandiri, serta sinkronisasi cloud aman.
 
-## Menjalankan
+Tautan Produksi: [https://skilllevel-app.vercel.app](https://skilllevel-app.vercel.app)
+
+---
+
+## Fitur Utama
+
+- **Kurikulum Terstruktur (9 Modul)**: Dari dasar peramban web, HTML5 semantik, CSS modern & Flexbox, JavaScript ES6+, DOM manipulation, hingga RESTful API dan integrasi basis data fullstack.
+- **Evaluasi Kuis Adaptif**: Bank soal 10 butir per modul dengan opsi acak, pembahasan mendalam, serta kalkulasi perolehan XP dan level belajar.
+- **Tutor AI Berkonteks Modul**: Asisten belajar interaktif yang dikunci secara ketat pada modul yang sedang dipelajari untuk mencegah halusinasi dan kebocoran instruksi sistem.
+- **Model Bawaan Otomatis (Zero-Config)**: Sistem otomatis menggunakan model bawaan **Agnes 2.5 Flash** dan **Mercury-3** dengan mekanisme fallback cerdas saat terjadi kendala jaringan.
+- **Dukungan Provider Mandiri (Self Provider)**: Dialog pengaturan khusus bagi pengguna yang ingin memakai endpoint dan kunci API pribadi (OpenAI Compatible, Groq, OpenRouter, atau server mandiri).
+- **Autentikasi Mandiri & Aman**: Pendaftaran dan login akun dengan hashing kata sandi berbasis salt unik di sisi klien, tersinkronisasi ke PostgreSQL Supabase dengan Row Level Security (RLS) serta fallback lokal saat offline.
+- **Integrasi Desain Vektor Figma**: Skrip terpadu untuk mengekspor dan menyinkronkan 8 artboard desktop vektor 1440x900 langsung ke berkas Figma resmi.
+
+---
+
+## Menjalankan Aplikasi
+
+### 1. Pengembangan Lokal (Development)
 
 ```bash
+# Pasang dependensi
 npm install
-cp .env.example .env      # Windows: copy .env.example .env
-npm run dev               # http://localhost:5173
+
+# Salin berkas konfigurasi lingkungan
+cp .env.example .env       # Windows PowerShell: copy .env.example .env
+
+# Jalankan server pengembangan Vite
+npm run dev                # Buka http://localhost:5173
 ```
 
-Untuk mode produksi:
+### 2. Mode Produksi Lokal (Production)
 
 ```bash
 npm run build
-npm start                 # http://localhost:4173
+npm start                  # Server produksi di port 3000
 ```
 
-`npm run dev` menjalankan Vite beserta middleware proxy AI. `npm start` menjalankan server Node yang menyajikan `dist/` sekaligus proxy AI.
+`npm run dev` menjalankan Vite beserta middleware proxy AI. `npm start` menjalankan server Node.js yang menyajikan berkas statis `dist/` sekaligus proxy inferensi AI.
 
-## Konfigurasi `.env`
+---
+
+## Konfigurasi Lingkungan (`.env`)
+
+Aplikasi menggunakan konfigurasi fleksibel dengan dukungan model bawaan ganda dan multi-kunci cadangan:
 
 | Variabel | Bawaan | Keterangan |
 | --- | --- | --- |
-| `AI_BASE_URL` | `https://apihub.agnes-ai.com/v1` | Endpoint gaya OpenAI. Server memanggil `{AI_BASE_URL}/chat/completions` |
-| `AI_MODEL` | `agnes-2.5-flash` | Model bawaan untuk semua pengguna |
-| `AI_API_KEY` | kosong | Kredensial model bawaan. Hanya dibaca server |
-| `AI_STREAMING` | `1` | `1` mengalirkan jawaban, `0` menunggu jawaban utuh |
-| `AI_THINKING` | `auto` | `auto` mengirim `thinking: {type:"auto"}`, `off` tidak mengirim |
-| `AI_ALLOW_PRIVATE_ENDPOINTS` | `0` | `1` mengizinkan endpoint localhost atau jaringan privat, hanya untuk pengembangan |
-| `AI_MAX_INPUT_CHARS` | `120000` | Batas total karakter konteks per permintaan |
+| `Mercury` | `https://api.inceptionlabs.ai/v1` | URL basis endpoint untuk model Mercury-3. |
+| `Agnes` | `https://apihub.agnes-ai.com/v1` | URL basis endpoint untuk model Agnes 2.5 Flash. |
+| `Mercury_key` | *(Kosong)* | Kredensial server Mercury. Mendukung multi-kunci cadangan dipisahkan tanda koma (`key1,key2...`). |
+| `Agnes_key` | *(Bawaan Server)* | Kredensial server Agnes. Mendukung multi-kunci cadangan dipisahkan tanda koma (`key1,key2...`). |
+| `AI_PROVIDER` | `openai` | Protokol penyedia API (`openai`, `anthropic`, atau `gemini`). |
+| `AI_STREAMING` | `1` | `1` untuk streaming respons real-time bertahap, `0` untuk respons utuh. |
+| `AI_THINKING` | `auto` | `auto` mengirim parameter penalaran berpikir, `off` untuk mematikan. |
+| `AI_ALLOW_PRIVATE_ENDPOINTS` | `0` | `1` mengizinkan host privat/localhost (khusus pengujian lokal). |
+| `AI_MAX_INPUT_CHARS` | `120000` | Batas maksimum karakter konteks modul per permintaan AI. |
+| `SERVER_ENCRYPTION_KEY` | *(Secret 32-char)* | Kunci enkripsi simetris AES-256 untuk perlindungan token sisi server. |
+| `VITE_SUPABASE_URL` | *(Opsional)* | URL instance Supabase untuk autentikasi dan sinkronisasi database cloud. |
+| `VITE_SUPABASE_ANON_KEY` | *(Opsional)* | Kunci publik anon Supabase dengan Row Level Security aktif. |
 
-Tanpa `AI_API_KEY`, aplikasi tetap berjalan penuh untuk modul dan kuis bawaan. Tutor memakai kutipan modul, dan modul unggahan disusun dengan generator lokal.
+---
 
-## Model dan endpoint kustom
+## Konfigurasi Provider AI Mandiri
 
-Dialog **Pengaturan AI** menyediakan tiga kolom opsional:
+Pengguna yang ingin menggunakan endpoint dan kredensial pribadi dapat mengaturnya melalui tombol **Pengaturan AI** di bilah navigasi:
 
-1. **Alamat endpoint**: harus `https://`, tanpa query, tanpa fragmen, tanpa kredensial di URL.
-2. **Nama model**: hanya huruf, angka, titik, garis miring, garis bawah, tanda hubung, plus, dan at.
-3. **Kunci API kustom**: hanya hidup di memori tab, tidak pernah ditulis ke `localStorage`.
+1. **Protokol Provider**: Pilihan OpenAI Compatible, Anthropic Claude, atau Google Gemini.
+2. **Endpoint Kustom**: Alamat HTTPS pribadi (misal: `https://api.openai.com/v1`).
+3. **Kunci API Kustom**: Disimpan hanya di memori sesi peramban lokal dan tidak pernah disimpan ke basis data pusat.
+4. **Parameter Inferensi**: Pengaturan kustom untuk *Temperature* dan *Max Output Tokens*.
 
-Kosongkan ketiganya untuk memakai model bawaan dari `.env`.
+Jika kolom konfigurasi dikosongkan, aplikasi secara otomatis kembali menggunakan model bawaan server (*zero-config*).
 
-## Model keamanan
+---
 
-- **Kunci tidak pernah ke browser.** `GET /api/ai/health` hanya mengembalikan `hasServerKey`, nama model, dan endpoint bawaan.
-- **Proteksi SSRF.** `validateEndpoint` menolak skema selain http/https, `http` tanpa izin eksplisit, kredensial di URL, query atau fragmen, serta host `localhost`, `*.local`, `*.internal`, `*.home.arpa`, `::1`, `fc00::/7`, `fe80::/10`, `10/8`, `127/8`, `169.254/16`, `192.168/16`, dan `172.16/12`.
-- **Redaksi rahasia.** Semua pesan galat dan log melewati `redact()`, yang menghapus kunci yang dikonfigurasi serta pola `sk-...`, `AIza...`, `Bearer ...`, dan `api_key=...`.
-- **Batas laju.** 40 permintaan per menit per alamat IP, dengan `Retry-After` saat terlampaui.
-- **Batas ukuran.** Body permintaan maksimal 1,5 MB, 40 pesan, 60.000 karakter per pesan.
-- **Kunci lama dibersihkan.** `purgeLegacySecrets()` menghapus `sl_gemini_key` dari `localStorage` saat aplikasi dimuat.
-- **Tanpa `dangerouslySetInnerHTML`.** Markdown jawaban dirender sebagai elemen React.
-- **PDF lokal.** Tidak ada skrip pihak ketiga yang dimuat saat runtime.
+## Arsitektur Keamanan & Privasi
 
-## Sembilan modul
+- **Penyembunyian Kredensial Server**: Kunci API server Agnes dan Mercury tidak pernah dikirim ke peramban pengguna. Endpoint `/api/ai/health` hanya menampilkan status kesiapan dan nama model publik.
+- **Proteksi SSRF (Server-Side Request Forgery)**: Fungsi `validateEndpoint` memblokir skema non-HTTPS, kredensial di URL, serta alamat IP jaringan privat (`localhost`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `127.0.0.1`, dll).
+- **Pembersihan Kebocoran Rahasia (*Secret Redaction*)**: Modul `sanitizeAiOutput` memfilter token otorisasi, pola kunci (`sk-...`, `AIza...`), serta variabel lingkungan sensitif dari setiap respons AI.
+- **Deteksi Anti-Looping Streaming**: Modul `createLoopDetector` memantau kemunculan kalimat yang berulang secara nyata tanpa memutus streaming normal dengan potongan chunk banyak.
+- **Autentikasi Mandiri Tanpa Ketergantungan OAuth**: Seluruh data login diproses dengan verifikasi hash mandiri dan tersinkronisasi dua arah antara database Supabase dan cache lokal.
 
-| # | Modul | Topik |
+---
+
+## Kurikulum 9 Modul Pembelajaran
+
+| No | Modul Kurikulum | Topik Utama |
 | --- | --- | --- |
-| 01 | Cara Browser Menampilkan Halaman | Dasar web |
-| 02 | HTML Bermakna dan Aksesibel | HTML |
-| 03 | CSS: Tata Letak dan Sistem Desain | CSS |
-| 04 | JavaScript: Nilai, Fungsi, dan Array | JavaScript |
-| 05 | DOM, Event, dan State Antarmuka | Interaksi |
-| 06 | HTTP, REST, dan Bentuk Respons | Jaringan |
-| 07 | Web Server dan Basis Data | Backend |
-| 08 | Integrasi Model AI yang Aman | AI |
-| 09 | Keamanan Aplikasi Web | Keamanan |
+| 01 | Cara Browser Menampilkan Halaman | Siklus request HTTP, DNS, parsing HTML, DOM, CSSOM, Render Tree |
+| 02 | HTML Bermakna dan Aksesibel | Struktur semantik, aksesibilitas ARIA, navigasi SEO ramah mesin pencari |
+| 03 | CSS Modern, Grid & Flexbox | Layout 2 dimensi responsif, variabel CSS, auto-fit, media queries |
+| 04 | JavaScript: Nilai, Fungsi, dan Array | ES6+, destructuring, immutability, closure, higher-order functions |
+| 05 | DOM, Event, dan State Antarmuka | Event bubbling, event delegation efisien, manipulasi tree node |
+| 06 | HTTP, REST, dan Bentuk Respons | Asynchronous JS, Promises, Fetch API, penanganan kode status HTTP |
+| 07 | Web Server dan Basis Data | Arsitektur runtime Node.js, Express REST API, struktur database relasional |
+| 08 | Integrasi Model AI yang Aman | Prompt grounding, mitigasi prompt injection, sanitasi respons model |
+| 09 | Keamanan Aplikasi Web | Proteksi OWASP Top 10, sanitasi XSS, pencegahan CSRF, enkripsi data |
 
-Setiap modul berisi ringkasan, gambaran umum, empat langkah dengan analogi, dua contoh, lima poin penting, empat flashcard, dan sepuluh soal kuis dengan pembahasan.
+Setiap modul dilengkapi materi konsep, contoh kode nyata, daftar isi interaktif, tip performa, serta evaluasi kuis 10 soal adaptif.
 
-## Struktur
+---
 
-```
-server/
-  env.js        pembacaan .env dan konfigurasi AI
-  security.js   redaksi rahasia, validasi endpoint, pembatas laju
-  aiProxy.js    klien OpenAI-compatible, streaming, fallback thinking
-  handler.js    rute /api/ai/health dan /api/ai/chat
-  index.js      server produksi untuk dist/ dan API
-  test/         pengujian node --test
-src/
-  App.jsx       perakit state dan navigasi
-  views/        Dashboard, Modules, ModuleDetail, QuizView, Tutor, Upload, Progress
-  components/   Shell, Settings, Markdown, primitif UI
-  lib/          aiClient, chatContext, module, quiz, quizRun, extract, materials, store
-  data/         curriculum.js
-```
+## Desain Figma & Arsitektur Sistem
 
-## Skrip
+Arsitektur desain aplikasi diorganisasi secara modular berbasis alur fitur (*Flow-based Architecture*) dengan artboard desktop standar 1440x900 berbasis vektor asli (*vector node tree*):
+
+- **01 Authentication Flow**: [Figma File 01](https://www.figma.com/design/DogKwsWdp8R8plI3GiaRW1) (Form Login & Register mandiri)
+- **02 Dashboard & Curriculum**: [Figma File 02](https://www.figma.com/design/MKtNdIT96Yq5greixL1UMy) (Dasbor Belajar & Katalog 9 Modul)
+- **03 Interactive Learning & AI Tutor**: [Figma File 03](https://www.figma.com/design/03imbc2TMZmTUndZyw6Q6n) (Detail Modul, Kuis Adaptif, Drawer AI Tutor)
+- **04 Settings & Modals**: [Figma File 04](https://www.figma.com/design/qoM6bDqhnTvY2rzv8kRV6a) (Modal Konfigurasi Provider Mandiri)
+- **Flowchart & System Board**: [FigJam Architecture Board](https://www.figma.com/board/pYWqsjI9QUFtjXpW0FdAOc) (Diagram alur sistem, batas keamanan, dan siklus sinkronisasi)
+
+---
+
+## Skrip yang Tersedia
 
 | Perintah | Kegunaan |
 | --- | --- |
-| `npm run dev` | Vite plus proxy AI di port 5173 |
-| `npm run build` | Bundel produksi ke `dist/` |
-| `npm start` | Server produksi di port 4173 |
-| `npm test` | 32 pengujian `node --test` |
+| `npm run dev` | Menjalankan server pengembangan Vite dan proxy AI lokal (port 5173) |
+| `npm run build` | Mengompilasi bundel produksi teroptimasi ke direktori `dist/` |
+| `npm start` | Menjalankan server produksi terpadu Node.js (port 3000) |
+| `npm run lint` | Memeriksa validitas sintaks seluruh 13 berkas JavaScript utama |
+| `npm test` | Menjalankan 45 pengujian unit dan keamanan otomatis (`node --test`) |
+| `npm run figma:sync` | Mengenerate 8 artboard vektor desktop 1440x900 dari kode proyek ke folder `design_exports/` |
 
-## Pengujian
+---
 
-`npm test` mencakup:
+## Struktur Proyek
 
-- `server/test/security.test.js`: redaksi rahasia, deteksi host privat, validasi endpoint, pembatas laju.
-- `server/test/env.test.js`: parser `.env`, nilai bawaan, dan validasi batas input.
-- `server/test/lib.test.js`: sanitasi analisis dan soal, generator lokal, skor kuis, level, rentetan harian, format pesan chat, dan integritas kurikulum.
+```
+server/
+  env.js         Pembacaan konfigurasi lingkungan, parsing multi-kunci Agnes & Mercury
+  security.js    Redaksi rahasia, validasi endpoint publik, pembatas frekuensi permintaan
+  leakGuard.js   Deteksi anti-injection, sanitasi output AI, deteksi repetisi loop
+  aiProxy.js     Proxy inferensi model bawaan & mandiri, fallback otomatis, streaming
+  handler.js     Handler endpoint serverless /api/ai/health dan /api/ai/chat
+  index.js       Server produksi Node.js penyaji dist/ dan API
+  test/          Suite 45 pengujian unit otomatis (security, env, lib, production)
+src/
+  App.jsx        Komponen utama perakit navigasi dan state global
+  views/         LoginView, DashboardView, ModuleDetailView, QuizView, TutorView, UploadView
+  components/    Komponen UI, SettingsDialog, Markdown, Tag, Field, Button
+  lib/           supabaseClient, aiClient, chatContext, module, quiz, quizRun, crypto, i18n
+  data/          curriculum.js (Kurikulum 9 modul bawaan beserta bank soal)
+design_exports/  Ekspor lokal 8 artboard vektor SVG 1440x900
+scripts/         Skrip verifikasi lint, pengujian, build, dan figma:sync
+```
 
-## Yang masih perlu tindak lanjut
+---
 
-- Isi `AI_API_KEY` di `.env` agar model bawaan aktif. Tanpa itu, fitur AI memakai jalur cadangan.
-- `npm run lint` belum bisa dipakai karena belum ada berkas konfigurasi ESLint di proyek ini.
-- Progres, riwayat chat, dan modul unggahan disimpan di `localStorage` peramban, jadi tidak tersinkron antar perangkat.
-- Belum ada autentikasi. Bila aplikasi dipasang publik, tambahkan lapisan autentikasi dan pembatas laju berbasis akun.
+## CI/CD & Deployment
+
+- **GitHub Actions Pipeline**: Menguji kepatuhan lint, 45 unit tests, serta verifikasi build produksi pada setiap aktivitas *push* ke branch `main`.
+- **Produksi Otomatis Vercel**: Deployment terintegrasi secara otomatis dan langsung aktif saat alur CI berstatus hijau.
